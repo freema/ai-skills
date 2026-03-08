@@ -1,0 +1,152 @@
+---
+description: "Build 2D browser games with Phaser 3 (JS/TS): scenes, sprites, physics (Arcade/Matter), tilemaps (Tiled), animations, input. Trigger: 'Phaser scene', 'Arcade physics', 'tilemap', 'Phaser 3 game'."
+globs: "**/*.{ts,js}"
+alwaysApply: false
+---
+
+# Phaser Game Development
+
+Build 2D browser games using Phaser 3's scene-based architecture and physics systems.
+
+## STOP: Before Loading Any Spritesheet
+
+Spritesheet loading is fragile -- a few pixels off causes silent corruption.
+
+**Quick rules:**
+1. **Measure the asset** before writing loader code -- never guess frame dimensions
+2. **Character sprites use SQUARE frames**: If you calculate frameWidth=56, try 56 for height first
+3. **Different animations have different frame sizes**: Run cycle needs wider frames than idle; attack needs extra width for weapon swing. Measure EACH spritesheet independently
+4. **Check for spacing**: Gaps between frames require `spacing: N` in loader config
+5. **Verify the math**: `imageWidth = (frameWidth x cols) + (spacing x (cols - 1))`
+
+## Architecture Decisions (Make Early)
+
+Before building, decide:
+- What **scenes** does this game need? (Boot, Menu, Game, UI overlay, GameOver)
+- What are the **core entities** and how do they interact?
+- What **physics** model fits? (Arcade for speed, Matter for realism, None for menus)
+- What **input methods**? (keyboard/gamepad/touch)
+
+### Physics System Choice
+
+| System | Use When |
+|--------|----------|
+| **Arcade** | Platformers, shooters, most 2D games. Fast AABB collisions |
+| **Matter** | Physics puzzles, ragdolls, realistic collisions. Slower, more accurate |
+| **None** | Menu scenes, visual novels, card games |
+
+## Core Principles
+
+1. **Scene-first architecture**: Organize code around scene lifecycle and transitions
+2. **Composition over inheritance**: Build entities from sprite/body/controllers
+3. **Physics-aware design**: Choose collision model early
+4. **Asset pipeline discipline**: Preload everything; reference by keys
+5. **Frame-rate independence**: Use `delta` for motion and timers
+
+## CRITICAL: Scaled Sprites + Physics Bodies
+
+When textures are larger than display size, `body.setSize()` is multiplied by sprite scale!
+
+**WRONG** -- body becomes tiny:
+```typescript
+sprite.setDisplaySize(80, 12);       // scale = 80/1200 = 0.067
+sprite.body.setSize(80, 12);          // actual body = 80 * 0.067 = 5px!
+```
+
+**CORRECT** -- use FRAME (texture) size:
+```typescript
+sprite.setDisplaySize(80, 12);
+const body = sprite.body as Phaser.Physics.Arcade.Body;
+body.setSize(sprite.frame.width, sprite.frame.height);  // body = 1200 * 0.067 = 80px
+```
+
+For **static bodies**, also call `updateFromGameObject()`:
+```typescript
+brick.setDisplaySize(40, 16);
+const body = brick.body as Phaser.Physics.Arcade.StaticBody;
+body.setSize(brick.frame.width, brick.frame.height);
+body.updateFromGameObject();  // REQUIRED for static bodies!
+```
+
+## CRITICAL: Keyboard Input -- Canvas Focus Problem
+
+Phaser's keyboard only works when canvas has focus. When embedded in React/SPA, canvas loses focus constantly.
+
+**Required config:**
+```typescript
+input: {
+  keyboard: {
+    target: window,
+  },
+},
+```
+
+Each scene MUST capture ALL keys it uses:
+```typescript
+this.input.keyboard!.addCapture([
+  Phaser.Input.Keyboard.KeyCodes.SPACE,
+  Phaser.Input.Keyboard.KeyCodes.UP,
+  Phaser.Input.Keyboard.KeyCodes.DOWN,
+  Phaser.Input.Keyboard.KeyCodes.LEFT,
+  Phaser.Input.Keyboard.KeyCodes.RIGHT,
+]);
+```
+
+**NEVER** call `preventDefault()` on keyboard events before Phaser processes them.
+
+## Anti-Patterns
+
+| Anti-Pattern | Problem | Solution |
+|--------------|---------|----------|
+| Global state on `window` | Scene transitions break state | Use scene data, registries |
+| Loading in `create()` | Assets not ready | Load in `preload()`, use Boot scene |
+| Frame counting | Game speed varies with FPS | Use `delta / 1000` |
+| One giant scene | Hard to extend | Separate gameplay/UI/menus |
+| Magic numbers | Impossible to balance | Config objects, constants |
+| No object pooling | GC stutters | Groups with `setActive(false)` |
+| `body.setSize(displayW, displayH)` on scaled sprites | Body is tiny | Use `body.setSize(frame.width, frame.height)` |
+
+## Object Pooling Pattern
+
+```javascript
+const bullets = this.physics.add.group({
+  defaultKey: 'bullet',
+  maxSize: 100,
+  runChildUpdate: true,
+});
+
+// Spawn
+const bullet = bullets.get(x, y);
+if (bullet) {
+  bullet.setActive(true).setVisible(true);
+  bullet.body.enable = true;
+  bullet.body.reset(x, y);
+  bullet.setVelocity(vx, vy);
+}
+
+// Kill
+bullet.setActive(false);
+bullet.setVisible(false);
+bullet.body.enable = false;
+```
+
+## Scene Lifecycle
+
+```javascript
+class GameScene extends Phaser.Scene {
+  constructor() { super('GameScene'); }
+  init(data) { /* receive data from previous scene */ }
+  preload() { /* load assets */ }
+  create() { /* set up objects, physics, input */ }
+  update(time, delta) { /* game loop, use delta for movement */ }
+}
+```
+
+## Scene Transitions
+
+```javascript
+this.scene.start('GameOverScene', { score: this.score });
+this.scene.launch('UIScene');  // parallel
+this.scene.pause('GameScene');
+this.scene.resume('GameScene');
+```
