@@ -1,0 +1,17 @@
+{
+  "name": "agent-skills",
+  "owner": {
+    "name": "Tomas Grasl"
+  },
+  "metadata": {
+    "description": "Curated AI agent skills for game development — Phaser 3, Gemini image generation, PixelLab pixel art.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "pixelden",
+      "source": "./skills/pixelden",
+      "description": "PixelDen game development toolkit — Phaser 3 engine, Gemini asset generation, PixelLab MCP pixel art."
+    }
+  ]
+}

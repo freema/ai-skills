@@ -1,10 +1,14 @@
 # Agent Skills
 
-A curated collection of AI agent skills for game development — compatible with **Claude Code** (Anthropic) and **Cursor IDE**.
+A curated marketplace of AI agent skills for game development — compatible with **Claude Code** (Anthropic) and **Cursor IDE**.
 
 Built around the [PixelDen](https://pixelden.io) game development workflow: Phaser 3 game engine, Gemini image generation, and PixelLab pixel art tooling.
 
-## Available Skills
+## Available Plugins
+
+### pixelden
+
+PixelDen game development toolkit.
 
 | Skill | Description |
 |-------|-------------|
@@ -18,51 +22,92 @@ Each skill includes detailed reference material covering common pitfalls, anti-p
 
 ### Claude Code
 
-Skills are installed by placing them in your project's `.claude/skills/` directory.
-
-**Option A: Clone the whole repo into your project**
+**Add this marketplace and install the plugin:**
 
 ```bash
-# From your project root
-git clone https://github.com/freema/agent-skills.git .claude/skills/agent-skills
+# Add the marketplace
+/plugin marketplace add freema/agent-skills
+
+# Install the pixelden plugin
+/plugin install pixelden@agent-skills
 ```
 
-**Option B: Copy individual skills**
+Skills will appear as `/slash-commands` (e.g. `/phaser-gamedev`, `/image-generation`, `/pixellab`).
+
+**Update to latest version:**
 
 ```bash
-# Copy just the skill you need
-cp -r agent-skills/skills/pixelden/phaser-gamedev .claude/skills/phaser-gamedev
-```
-
-Once installed, skills appear as `/slash-commands` in Claude Code. For example, `/phaser-gamedev` will load the full Phaser 3 development guide into context.
-
-> **How it works:** Claude Code reads the `SKILL.md` file's frontmatter (`name`, `description`) at startup. The `description` field determines when Claude automatically loads the skill. The full content is only loaded when relevant.
-
-#### SKILL.md Format
-
-```yaml
----
-name: my-skill
-description: "Short description for trigger matching"
----
-
-# Skill Title
-
-Your markdown instructions here.
+/plugin marketplace update
+/plugin update pixelden@agent-skills
 ```
 
 ### Cursor IDE
 
-Rules are installed by copying `.mdc` files into your project's `.cursor/rules/` directory.
+**Install via Cursor marketplace:**
 
-```bash
-# From your project root
-cp -r agent-skills/cursor/rules/*.mdc .cursor/rules/
+```
+/add-plugin freema/agent-skills
 ```
 
-Rules are automatically loaded by Cursor's AI agent based on the `description` field and `globs` pattern matching.
+Or manually copy rules into your project:
 
-#### .mdc Format
+```bash
+# Clone and copy rules
+git clone https://github.com/freema/agent-skills.git /tmp/agent-skills
+cp -r /tmp/agent-skills/skills/pixelden/rules/*.mdc .cursor/rules/
+```
+
+Rules are automatically loaded by Cursor's agent based on the `description` field and file `globs` matching.
+
+## Repository Structure
+
+```
+agent-skills/
+├── .claude-plugin/
+│   └── marketplace.json             # Claude Code marketplace manifest
+├── .cursor-plugin/
+│   └── marketplace.json             # Cursor IDE marketplace manifest
+├── skills/
+│   └── pixelden/                    # Plugin: pixelden
+│       ├── .claude-plugin/
+│       │   └── plugin.json          # Claude Code plugin manifest
+│       ├── .cursor-plugin/
+│       │   └── plugin.json          # Cursor IDE plugin manifest
+│       ├── image-generation/
+│       │   └── SKILL.md             # Gemini image generation skill
+│       ├── phaser-gamedev/
+│       │   ├── SKILL.md             # Phaser 3 game dev skill
+│       │   └── references/          # Detailed reference docs
+│       │       ├── arcade-physics.md
+│       │       ├── core-patterns.md
+│       │       ├── keyboard-input.md
+│       │       ├── performance.md
+│       │       ├── spritesheets-nineslice.md
+│       │       └── tilemaps.md
+│       ├── pixellab/
+│       │   └── SKILL.md             # PixelLab MCP skill
+│       └── rules/                   # Cursor IDE rules (.mdc)
+│           ├── pixelden-image-generation.mdc
+│           ├── pixelden-phaser-gamedev.mdc
+│           └── pixelden-pixellab.mdc
+├── LICENSE
+└── README.md
+```
+
+## Plugin Format
+
+### Claude Code (SKILL.md)
+
+```yaml
+---
+name: my-skill
+description: "Short description — determines when Claude auto-loads the skill"
+---
+
+# Skill content in markdown
+```
+
+### Cursor IDE (.mdc)
 
 ```yaml
 ---
@@ -71,60 +116,24 @@ globs: "**/*.ts"
 alwaysApply: false
 ---
 
-# Rule Title
-
-Your markdown instructions here.
-```
-
-**Activation modes:**
-
-| Mode | When |
-|------|------|
-| `alwaysApply: true` | Loaded into every conversation |
-| `globs: "pattern"` | Auto-attached when working with matching files |
-| Agent Requested | AI reads `description` and decides based on context |
-
-## Repository Structure
-
-```
-agent-skills/
-├── skills/                          # Claude Code skills (SKILL.md)
-│   └── pixelden/
-│       ├── image-generation/
-│       │   └── SKILL.md
-│       ├── phaser-gamedev/
-│       │   ├── SKILL.md
-│       │   └── references/          # Detailed reference docs
-│       │       ├── arcade-physics.md
-│       │       ├── core-patterns.md
-│       │       ├── keyboard-input.md
-│       │       ├── performance.md
-│       │       ├── spritesheets-nineslice.md
-│       │       └── tilemaps.md
-│       └── pixellab/
-│           └── SKILL.md
-├── cursor/                          # Cursor IDE rules (.mdc)
-│   └── rules/
-│       ├── pixelden-image-generation.mdc
-│       ├── pixelden-phaser-gamedev.mdc
-│       └── pixelden-pixellab.mdc
-├── LICENSE
-└── README.md
+# Rule content in markdown
 ```
 
 ## Contributing
 
 1. Fork this repository
-2. Create a new skill in `skills/<author>/<skill-name>/SKILL.md`
-3. Create a matching Cursor rule in `cursor/rules/<author>-<skill-name>.mdc`
-4. Submit a pull request
+2. Create your plugin directory: `skills/<your-name>/`
+3. Add `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json` manifests
+4. Create skills as `<skill-name>/SKILL.md` and matching Cursor rules in `rules/<skill-name>.mdc`
+5. Register your plugin in both marketplace manifests at the repo root
+6. Submit a pull request
 
 ### Guidelines
 
 - Keep `SKILL.md` under 500 lines — move detailed docs to `references/` subdirectory
 - Write clear `description` fields — they determine when the AI loads the skill
 - Include practical code examples and anti-patterns
-- Test your skill with both Claude Code and Cursor before submitting
+- Test your plugin with both Claude Code and Cursor before submitting
 
 ## License
 
