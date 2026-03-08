@@ -1,0 +1,105 @@
+---
+description: "Generate game assets via Google Gemini API and process them into final sprite files. Trigger: 'generate image', 'game asset', 'sprite sheet', 'Gemini image', 'asset pipeline'."
+globs:
+alwaysApply: false
+---
+
+# Image Generation & Asset Pipeline
+
+Generate game assets via Google Gemini API and process them into final sprite files.
+
+## Tool
+
+```bash
+GEMINI_API_KEY=$(grep GEMINI_API_KEY .env | cut -d= -f2) \
+  node tools/generate-image.mjs "<prompt>" [--out <path>] [--aspect <ratio>] [--model <name>] [--count <n>] [--ref <image>]
+```
+
+## Models
+
+| Model | Note |
+|-------|------|
+| `gemini-3-pro-image-preview` | **Default** — best quality |
+| `gemini-3.1-flash-image-preview` | Faster |
+| `imagen-4.0-generate-001` | Imagen 4, supports `--negative` |
+
+## Aspect Ratios
+
+`1:1` | `16:9` | `9:16` | `4:3` | `3:4`
+
+## Asset Pipeline (MANDATORY WORKFLOW)
+
+### Step 1: Generate via Gemini
+
+For **sprite sheet** (multiple assets):
+```bash
+node tools/generate-image.mjs \
+  "Pixel art sprite sheet of 8 breakout bricks in horizontal row, evenly spaced on pure black background. Colors: pink, red, orange, gold, green, cyan, blue, purple. Each brick ~2.5:1 aspect ratio, neon style, dark outline. No text." \
+  --out public/assets/games/breakout/bricks-sheet.png \
+  --aspect 4:3
+```
+
+For **single asset**:
+```bash
+node tools/generate-image.mjs \
+  "Pixel art paddle bar for breakout game. Neon cyan, wide flat rectangle, white highlight, dark outline, glow. Pure black background. No text." \
+  --out public/assets/games/breakout/paddle-raw.png \
+  --aspect 16:9
+```
+
+#### Prompting Rules
+- **Always specify background**: `pure black background` or `pure white background`
+- **Always add** `No text, no other elements`
+- **Specify proportions**: `~2.5:1 aspect ratio`, `7 times wider than tall`
+- **Style**: `pixel art`, `8-bit`, `retro arcade`, `neon glowing`
+- **PixelDen colors**: cyan `#00FFF2`, magenta `#FF00E4`, dark bg `#0A0E17`
+- **Aspect ratio**: `4:3` for sprite sheets, `16:9` for wide assets, `1:1` for square
+
+### Step 2: Process via `process-sprites.mjs`
+
+**ALWAYS** process after generating. Gemini generates large images (~1408x768) with lots of empty space.
+
+```bash
+node tools/process-sprites.mjs <input> [options]
+```
+
+**Options:**
+| Flag | Description |
+|------|-------------|
+| `--out <path>` | Output path (default: overwrite input; with `--split`: prefix) |
+| `--bg <black\|white>` | Background color to remove (default: auto-detect) |
+| `--threshold <n>` | Detection threshold (default: 20) |
+| `--split` | Split sheet into individual sprites |
+| `--names <a,b,c>` | Names for split sprites (default: 0,1,2...) |
+| `--square` | Pad to square |
+| `--pad <n>` | Padding around content (default: 2) |
+
+### Step 3: Cleanup
+
+```bash
+rm -f *-raw.png *-sheet.png *-gen.png *-new.png
+```
+
+## Asset Storage
+
+| Type | Path |
+|------|------|
+| Game sprites | `public/assets/games/{slug}/{asset}.png` |
+| Game thumbnail | `public/assets/games/{slug}/thumbnail.png` |
+| Hero banner | `public/assets/placeholders/hero-banner.png` |
+
+## Phaser Sprite Sizing
+
+Gemini generates large images (800-1400px). In Phaser they display small (40x16, 80x12, etc).
+
+**ALWAYS in code:**
+```typescript
+sprite.setDisplaySize(TARGET_W, TARGET_H);
+// For dynamic body:
+sprite.body!.setSize(TARGET_W, TARGET_H);
+// For STATIC body (bricks) -- MANDATORY:
+(sprite.body as Phaser.Physics.Arcade.StaticBody).setSize(W, H);
+(sprite.body as Phaser.Physics.Arcade.StaticBody).updateFromGameObject();
+```
+
+Without `updateFromGameObject()` on static bodies, physics hitbox will be at wrong position!

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "agent-skills",
+  "description": "Curated AI agent skills for game development — Phaser 3, Gemini image generation, PixelLab pixel art.",
+  "owner": {
+    "name": "Tomas Grasl"
+  },
+  "plugins": [
+    {
+      "name": "pixelden",
+      "source": "./skills/pixelden",
+      "description": "PixelDen game development toolkit — Phaser 3 engine, Gemini asset generation, PixelLab MCP pixel art.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "homepage": "https://pixelden.io",
+      "repository": "https://github.com/freema/agent-skills",
+      "license": "MIT",
+      "keywords": ["phaser", "gamedev", "pixel-art", "gemini", "pixellab", "2d-games"],
+      "category": "development"
+    }
+  ]
+}
