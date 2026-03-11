@@ -1,5 +1,32 @@
 # PixelLab MCP Skills
 
+## Reference Files
+
+Read these BEFORE working on the relevant feature:
+
+| When working on... | Read first |
+|--------------------|------------|
+| Sidescroller platform tiles (2D platformer) | [sidescroller-tilesets.md](references/sidescroller-tilesets.md) |
+| Top-down Wang tilesets (strategy/RPG maps) | See Wang section below |
+
+---
+
+## Sidescroller Tileset (2D Platformers)
+
+### When to use
+- Side-view platform tiles for platformer/runner games
+- Ground, floating platforms, crumbling platforms
+- **Read [sidescroller-tilesets.md](references/sidescroller-tilesets.md) for full reference**
+
+### Quick summary
+- `create_sidescroller_tileset` → 16 Wang tiles, 32×32, transparent bg
+- `lower_description` = material, `transition_description` = surface decoration
+- `transition_size`: 0.25 (light) or 0.5 (heavy surface)
+- Chain with `base_tile_id` + high `tileset_adherence` (300–400) for matching sets
+- Always `outline: "lineless"`
+
+---
+
 ## Wang Tileset (Top-Down Maps) — PREFERRED for terrain
 
 ### When to use
@@ -81,11 +108,19 @@
 
 ## Characters & Enemies
 
-### Directional sprites
-- `create_character` for base + `animate_character` for frames
+### Humanoid/Quadruped — use `create_character`
+- `body_type: "humanoid"` — bipedal (people, robots, knights)
+- `body_type: "quadruped"` + `template` — 4-legged (bear, cat, dog, horse, lion)
 - South = default facing, East = side view, North = back view
 - West = East sprite with `setFlipX(true)` in Phaser
-- Walk frames: 4 frames per direction at ~200ms interval
+- `animate_character` for walk/run/attack frames
+
+### Non-humanoid creatures (blobs, slimes, mushrooms) — use `create_map_object`
+- **NEVER use `create_character` for blobs/slimes** — humanoid template forces legs!
+- Generate each direction as separate map object (south, east, north)
+- Generate walk frames as separate map objects with pose variations (squished, stretched, tilted)
+- Describe explicitly: "no legs, no arms, no human features, blob body"
+- Walk animation = 4 map objects with different squish/stretch states
 
 ---
 

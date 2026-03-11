@@ -36,6 +36,7 @@ Read these BEFORE working on the relevant feature:
 | Config, scenes, objects, input, animations | [core-patterns.md](references/core-patterns.md) |
 | Tiled tilemaps, collision layers | [tilemaps.md](references/tilemaps.md) |
 | Physics tuning, groups, pooling | [arcade-physics.md](references/arcade-physics.md) |
+| Scrolling platforms, custom body sizes | [arcade-physics.md](references/arcade-physics.md) (Static vs Dynamic section) |
 | Performance issues, object pooling | [performance.md](references/performance.md) |
 | Keyboard input, SPACE key, canvas focus | [keyboard-input.md](references/keyboard-input.md) |
 
@@ -116,6 +117,7 @@ Phaser's keyboard only works when canvas has focus. When embedded in a React pag
 | Magic numbers | Impossible to balance | Config objects, constants |
 | No object pooling | GC stutters | Groups with `setActive(false)` |
 | `body.setSize(displayW, displayH)` on scaled sprites | Body is multiplied by scale → tiny | Use `body.setSize(frame.width, frame.height)` |
+| StaticBody + `setSize()` + `updateFromGameObject()` | `updateFromGameObject()` overwrites custom size every frame | Use immovable dynamic body (`setImmovable(true)`) — see [arcade-physics.md](references/arcade-physics.md) |
 
 ---
 

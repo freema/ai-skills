@@ -376,6 +376,69 @@ this.physics.world.on('worldstep', () => {
 });
 ```
 
+## Static vs Dynamic Bodies for Platforms
+
+### The Problem: `updateFromGameObject()` destroys custom body sizes
+
+If your platform collision body needs a **custom size** (via `setSize()`), **NEVER use StaticBody with `updateFromGameObject()`**. It overrides width/height every call:
+
+```javascript
+// StaticBody.updateFromGameObject() source:
+this.width = gameObject.displayWidth;   // OVERWRITES setSize()!
+this.height = gameObject.displayHeight;
+```
+
+This silently breaks collision when:
+- Body should be smaller than visual (e.g. Wang tile corners have transparent areas)
+- Body should be offset from visual center
+- Platforms scroll/move each frame (requiring `updateFromGameObject()` for position sync)
+
+### Solution: Immovable Dynamic Bodies
+
+For platforms that move (scrolling, elevators, etc.) AND need custom body sizes:
+
+```typescript
+// Group setup
+this.platforms = this.physics.add.group(); // NOT staticGroup!
+
+// Platform creation
+const collider = this.add.rectangle(x, y, w, h, 0x000000, 0);
+this.platforms.add(collider);
+const body = collider.body as Phaser.Physics.Arcade.Body;
+body.setImmovable(true);     // won't be pushed by collisions
+body.setAllowGravity(false); // won't fall
+body.setSize(bodyW, bodyH);  // custom size — PRESERVED!
+```
+
+**Why this works**: Dynamic body's `updateBounds()` only recalculates size when **scale changes**. If scale stays 1, `setSize()` is preserved permanently. No manual `updateFromGameObject()` needed — dynamic bodies sync position from game object automatically.
+
+### When to use which
+
+| Body Type | Use When |
+|-----------|----------|
+| **StaticGroup** | Truly fixed objects (walls, floor tiles), no custom size needed |
+| **Dynamic + immovable** | Moving platforms, scrolling world, custom body sizes |
+| **Dynamic + velocity** | Projectiles, enemies, player |
+
+### Endless Runner / Scrolling World Pattern
+
+```typescript
+// Move game object — body follows automatically
+p.collider.x += dx;   // scroll left
+// NO updateFromGameObject() needed!
+
+// Visual tiles follow manually
+for (const v of p.visuals) v.x += dx;
+```
+
+### `reset()` vs `updateFromGameObject()` for StaticBody
+
+If you MUST use StaticBody with custom sizes:
+- **`reset(x, y)`** — moves position only, **preserves** `setSize()`
+- **`updateFromGameObject()`** — syncs position AND size, **destroys** `setSize()`
+
+---
+
 ## Common Patterns
 
 ### One-Way Platforms
