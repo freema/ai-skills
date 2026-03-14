@@ -95,6 +95,41 @@ body.setSize(brick.frame.width, brick.frame.height);
 body.updateFromGameObject();  // REQUIRED for static bodies!
 ```
 
+### CRITICAL: Arcade physics bodies CANNOT rotate
+
+`setAngle()` / `setRotation()` rotates the VISUAL sprite only. The physics body stays axis-aligned (AABB). This means rotated wall sprites have wrong collision shapes.
+
+**WRONG** — body stays 64×32 horizontal even though sprite is rotated 90°:
+```typescript
+wall.setAngle(90);
+wall.body.setSize(64, 32); // still horizontal!
+```
+
+**CORRECT** — separate visual from collision:
+```typescript
+// Visual only (no physics)
+this.add.image(x, y, "wall").setAngle(90);
+
+// Invisible collision zone
+const zone = this.add.zone(x, y, 16, span);
+this.physics.add.existing(zone, true); // static body
+wallGroup.add(zone);
+```
+
+### Obstacle collision groups pattern
+
+Split obstacles into separate StaticGroups when different entities need different collision rules:
+```typescript
+this.walls = this.physics.add.staticGroup();  // invisible zones
+this.trees = this.physics.add.staticGroup();  // visible + physics
+
+// Walls block player only (enemies walk through to enter arena)
+this.physics.add.collider(this.player, this.walls);
+// Trees block everyone
+this.physics.add.collider(this.player, this.trees);
+this.physics.add.collider(this.enemyPool, this.trees);
+```
+
 ### CRITICAL: Keyboard input — canvas focus problem
 
 **Read [keyboard-input.md](references/keyboard-input.md) for the full solution.**
@@ -118,6 +153,10 @@ Phaser's keyboard only works when canvas has focus. When embedded in a React pag
 | No object pooling | GC stutters | Groups with `setActive(false)` |
 | `body.setSize(displayW, displayH)` on scaled sprites | Body is multiplied by scale → tiny | Use `body.setSize(frame.width, frame.height)` |
 | StaticBody + `setSize()` + `updateFromGameObject()` | `updateFromGameObject()` overwrites custom size every frame | Use immovable dynamic body (`setImmovable(true)`) — see [arcade-physics.md](references/arcade-physics.md) |
+| `setAngle()` on physics sprites | Visual rotates but body stays axis-aligned (AABB) | Use invisible zones for collision, sprites for visual only |
+| Constant `setAlpha(0.5)` for invincibility | Character looks broken/ghostly | Use blink tween (`alpha 1↔0.3, duration 80, yoyo`) |
+| Loading non-existent sprites in `preload()` | Silent 404 errors on every game load | Only load files that exist; use `!textures.exists()` + programmatic fallback in `create()` |
+| 2500 individual `add.image()` for tile grid | 2500 game objects = slow | Use `RenderTexture` — draw all tiles onto one texture |
 
 ---
 

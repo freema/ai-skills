@@ -83,6 +83,17 @@ Read these BEFORE working on the relevant feature:
 - Use upper ID as `lower_base_tile_id` in next tileset for seamless multi-terrain:
   - Tileset 1: dirt → stone (get stone base ID)
   - Tileset 2: stone → grass (use stone ID as lower_base_tile_id)
+- **Note**: Chaining via `lower_base_tile_id` param may error — generate independently with matching descriptions instead
+
+### Multi-tileset layering (terrain variety)
+- All PixelLab Wang tilesets use **identical tile layout** → same `WANG_FRAME` lookup for all
+- **Layer 1 (base)**: render full grid (e.g., void → snow for arena border)
+- **Layer 2+ (overlay)**: generate random blob shapes, render with second tileset, **skip `wangIdx === 0`** (all-lower = base shows through)
+- Use `RenderTexture` to composite all layers into one texture (performance)
+- Describe overlay tileset lower terrain to MATCH base tileset upper terrain for seamless blending
+
+### Download gotcha
+- Wang tileset PNG download: always `curl -L --fail` (API returns 302 redirect, without `-L` you get 0 bytes)
 
 ---
 
@@ -97,6 +108,11 @@ Read these BEFORE working on the relevant feature:
 - **Always `outline: "lineless"`** — user hates borders
 - Number each tile in description: `"1). tile A 2). tile B 3). tile C"`
 - `n_tiles` must match description count
+
+### Gotcha: Small pickups/projectiles look BAD as tiles
+- 16×16 tile squares look blocky when used as tiny in-game pickups (xp gems, health orbs) or projectiles
+- **Programmatic shapes** (circles, triangles via Graphics API) look BETTER for small game objects
+- Only use Tiles Pro for objects that are displayed at actual tile size (32×32+) like decorations, UI elements
 
 ### Gotcha: Corner tile orientation
 - PixelLab corner tiles often have WRONG orientation vs their name
