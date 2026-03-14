@@ -1,17 +1,27 @@
 {
-  "name": "agent-skills",
+  "name": "ai-skills",
   "owner": {
     "name": "Tomas Grasl"
   },
   "metadata": {
-    "description": "Curated AI agent skills for game development — Phaser 3, Gemini image generation, PixelLab pixel art.",
+    "description": "Curated AI agent skills for software development — game dev, pixel art, image generation, and more.",
     "version": "1.0.0"
   },
   "plugins": [
     {
-      "name": "pixelden",
-      "source": "./skills/pixelden",
-      "description": "PixelDen game development toolkit — Phaser 3 engine, Gemini asset generation, PixelLab MCP pixel art."
+      "name": "phaser-gamedev",
+      "source": "./skills/phaser-gamedev",
+      "description": "Build 2D browser games with Phaser 3 — scenes, sprites, Arcade/Matter physics, tilemaps, animations, keyboard input."
+    },
+    {
+      "name": "image-generation",
+      "source": "./skills/image-generation",
+      "description": "Generate game assets via Google Gemini API and process them into final sprite files."
+    },
+    {
+      "name": "pixellab",
+      "source": "./skills/pixellab",
+      "description": "Generate pixel art assets using PixelLab MCP — Wang tilesets, characters, map objects."
     }
   ]
 }
