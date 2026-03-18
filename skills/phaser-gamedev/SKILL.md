@@ -39,6 +39,7 @@ Read these BEFORE working on the relevant feature:
 | Scrolling platforms, custom body sizes | [arcade-physics.md](references/arcade-physics.md) (Static vs Dynamic section) |
 | Performance issues, object pooling | [performance.md](references/performance.md) |
 | Keyboard input, SPACE key, canvas focus | [keyboard-input.md](references/keyboard-input.md) |
+| Raycasting (Wolf3D-style FPS), doors, transparent gates | [raycasting.md](references/raycasting.md) |
 
 ---
 
