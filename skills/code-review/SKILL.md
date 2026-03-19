@@ -1,18 +1,14 @@
 ---
 name: code-review
 description: >
-  The code review cheerleader — "roztleskávačka". Use this skill for ANY code review,
-  PR/MR review, diff analysis, or when someone shares code and wants feedback.
+  Sandwich-structured code review for PRs, MRs, diffs, or pasted code.
   Triggers on: "review this", "check my PR/MR", "what do you think of this code",
-  "is this OK to merge", "zkontroluj kód", "podívej se na diff", or any paste of
-  code/diff where the user wants feedback.
-  Produces motivating, sandwich-structured reviews that PUSH people forward instead
-  of crushing them. Clearly separates blockers from nitpicks. Ends with Jira action
-  items when a Jira project context is available.
+  "is this OK to merge", or any paste of code/diff where the user wants feedback.
+  Produces motivating reviews that clearly separate blockers from nitpicks.
   Always use this skill — even for quick reviews. The structure matters.
 ---
 
-# Code Review Skill — The Roztleskávačka
+# Code Review Skill
 
 Goal: leave the author feeling **capable and motivated**, not defensive.
 The review should make them think "yes, I'm on the right track, let me fix that one thing."
@@ -21,7 +17,7 @@ The review should make them think "yes, I'm on the right track, let me fix that 
 
 ## The Sandwich Method (always follow this order)
 
-### Top Slice — Celkově / Overall
+### Top Slice — Overall
 
 - Open with genuine recognition of what's good
 - Name the design pattern or approach and why it's solid
@@ -63,41 +59,10 @@ The review should make them think "yes, I'm on the right track, let me fix that 
 
 ---
 
-## Jira Integration
-
-When Jira context is available (project key, issue number, or Atlassian MCP connected),
-append a **Jira Actions** section at the end of the review:
-
-```
-## Jira Actions
-- **[PROJECT-XXX]** — Add comment with review verdict + link to MR
-- **Blocker found?** → Add sub-task or comment: "Fix: `id` should be `c_${event}`"
-- **MR ready after fix?** → Suggest transition to "Ready for QA" or equivalent
-```
-
-When using the Atlassian MCP tool:
-
-1. Search for the relevant issue by MR title or branch name if not provided
-2. Post the verdict + blocker summary as a Jira comment (not the full review — keep it short)
-3. If a blocker was found, note it explicitly in the comment
-4. If no blockers, suggest the next workflow transition
-
-### Jira Comment Template
-
-```
-Code Review: [MR/PR title]
-Approach: [one sentence on what's solid]
-Blocker: [blocker description + fix] / No blockers found
-Minor notes: [count] (details in MR)
-Verdict: [Ready to merge after fix / Approved / Needs rework]
-```
-
----
-
 ## Example Output Structure
 
 ```
-## Celkově
+## Overall
 [positive opening paragraph about the approach]
 
 ## Bug
@@ -105,17 +70,12 @@ Verdict: [Ready to merge after fix / Approved / Needs rework]
 [broken code snippet]
 [fix snippet]
 
-## Drobné postřehy
+## Minor Notes
 1. [note with label: bug / style preference / positive observation]
 2. ...
 
-## Verdikt
+## Verdict
 [confident closing + blocker summary]
-
----
-
-## Jira Actions  <- only when Jira context available
-[comment posted / suggested actions]
 ```
 
 ---
@@ -124,6 +84,5 @@ Verdict: [Ready to merge after fix / Approved / Needs rework]
 
 - **No bugs found?** Still follow the sandwich. The filling becomes only minor notes.
 - **Multiple blockers?** List all under "Bug / Blocker". Don't bury them in minor notes.
-- **No Jira context?** Skip the Jira section entirely, don't mention it.
 - **Tiny snippet / quick question?** Keep the structure but compress it — 3 short paragraphs is fine.
 - **Architecture review (no diff)?** Same structure applies — "blockers" become design risks.
