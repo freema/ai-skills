@@ -1,0 +1,134 @@
+name: Validate Skills
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills/**"
+  pull_request:
+    paths:
+      - "skills/**"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  validate:
+    name: Validate skill files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed skills
+        id: changed
+        if: github.event_name == 'pull_request'
+        run: |
+          CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- 'skills/' \
+            | grep -oP '^skills/[^/]+' \
+            | sort -u \
+            | paste -sd ' ')
+          echo "dirs=$CHANGED" >> "$GITHUB_OUTPUT"
+          if [ -z "$CHANGED" ]; then
+            echo "any=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set validation targets
+        id: targets
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ steps.changed.outputs.any }}" = "true" ]; then
+            echo "paths=${{ steps.changed.outputs.dirs }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "paths=skills/" >> "$GITHUB_OUTPUT"
+          fi
+
+      # --- skill-validator ---
+      # Exit codes: 0=pass, 1=errors, 2=warnings-only
+      # We treat exit 2 (warnings) as success, only fail on exit 1 (errors)
+
+      - name: Install skill-validator
+        run: go install github.com/agent-ecosystem/skill-validator/cmd/skill-validator@latest
+        env:
+          GOBIN: /usr/local/bin
+
+      - name: Run skill-validator
+        id: skill-validator
+        run: |
+          FAILED=false
+          IFS=' ' read -ra DIRS <<< "${{ steps.targets.outputs.paths }}"
+          for dir in "${DIRS[@]}"; do
+            [ -z "$dir" ] && continue
+            echo "::group::skill-validator — $dir"
+            EXIT=0
+            skill-validator check --emit-annotations -o markdown "$dir" \
+              >> "$GITHUB_STEP_SUMMARY" || EXIT=$?
+            echo "::endgroup::"
+            # exit 1 = errors (fail), exit 2 = warnings only (pass)
+            if [ "$EXIT" -eq 1 ]; then
+              FAILED=true
+            elif [ "$EXIT" -eq 2 ]; then
+              echo "skill-validator reported warnings (exit 2) — treating as pass"
+            fi
+          done
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          # Always exit 0; the "Check results" step decides pass/fail
+          exit 0
+
+      # --- agnix ---
+      # Without --strict: exit 0 on warnings, exit 1 on errors only
+
+      - name: Install agnix
+        if: always()
+        run: npm install -g agnix
+
+      - name: Run agnix
+        id: agnix
+        if: always()
+        run: |
+          FAILED=false
+          IFS=' ' read -ra DIRS <<< "${{ steps.targets.outputs.paths }}"
+          for dir in "${DIRS[@]}"; do
+            [ -z "$dir" ] && continue
+            echo "::group::agnix — $dir"
+            EXIT=0
+            agnix --target claude-code "$dir" || EXIT=$?
+            echo "::endgroup::"
+            # exit 1 = real errors, exit 2 = warnings only
+            if [ "$EXIT" -eq 1 ]; then
+              FAILED=true
+            elif [ "$EXIT" -ne 0 ]; then
+              echo "agnix exited with $EXIT — treating as warnings (pass)"
+            fi
+          done
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          # Always exit 0; the "Check results" step decides pass/fail
+          exit 0
+
+      - name: Generate SARIF
+        if: always()
+        continue-on-error: true
+        run: agnix --target claude-code --format sarif -o agnix-results.sarif skills/
+
+      - name: Upload SARIF
+        if: always() && hashFiles('agnix-results.sarif') != ''
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: agnix-results.sarif
+
+      - name: Check results
+        if: always()
+        run: |
+          SV="${{ steps.skill-validator.outputs.failed }}"
+          AG="${{ steps.agnix.outputs.failed }}"
+          if [ "$SV" = "true" ] || [ "$AG" = "true" ]; then
+            echo "::error::Validation failed — skill-validator=$SV, agnix=$AG"
+            exit 1
+          fi
+          echo "All checks passed (warnings are allowed)."
