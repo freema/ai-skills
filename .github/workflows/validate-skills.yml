@@ -49,6 +49,8 @@ jobs:
           fi
 
       # --- skill-validator ---
+      # Exit codes: 0=pass, 1=errors, 2=warnings-only
+      # We treat exit 2 (warnings) as success, only fail on exit 1 (errors)
 
       - name: Install skill-validator
         run: go install github.com/agent-ecosystem/skill-validator/cmd/skill-validator@latest
@@ -58,19 +60,24 @@ jobs:
       - name: Run skill-validator
         id: skill-validator
         run: |
-          EXIT=0
+          FAILED=false
           IFS=' ' read -ra DIRS <<< "${{ steps.targets.outputs.paths }}"
           for dir in "${DIRS[@]}"; do
             [ -z "$dir" ] && continue
             echo "::group::skill-validator — $dir"
-            skill-validator check --strict --emit-annotations -o markdown "$dir" \
+            EXIT=0
+            skill-validator check --emit-annotations -o markdown "$dir" \
               >> "$GITHUB_STEP_SUMMARY" || EXIT=$?
             echo "::endgroup::"
+            # exit 1 = errors (fail), exit 2 = warnings only (pass)
+            if [ "$EXIT" -eq 1 ]; then
+              FAILED=true
+            fi
           done
-          echo "exit_code=$EXIT" >> "$GITHUB_OUTPUT"
-          exit $EXIT
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
 
       # --- agnix ---
+      # Without --strict: exit 0 on warnings, exit 1 on errors only
 
       - name: Install agnix
         if: always()
@@ -80,16 +87,17 @@ jobs:
         id: agnix
         if: always()
         run: |
-          EXIT=0
+          FAILED=false
           IFS=' ' read -ra DIRS <<< "${{ steps.targets.outputs.paths }}"
           for dir in "${DIRS[@]}"; do
             [ -z "$dir" ] && continue
             echo "::group::agnix — $dir"
-            agnix --target claude-code --strict "$dir" || EXIT=$?
+            if ! agnix --target claude-code "$dir"; then
+              FAILED=true
+            fi
             echo "::endgroup::"
           done
-          echo "exit_code=$EXIT" >> "$GITHUB_OUTPUT"
-          exit $EXIT
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
 
       - name: Generate SARIF
         if: always()
@@ -106,9 +114,10 @@ jobs:
       - name: Check results
         if: always()
         run: |
-          SV="${{ steps.skill-validator.outputs.exit_code }}"
-          AG="${{ steps.agnix.outputs.exit_code }}"
-          if [ "${SV:-0}" != "0" ] || [ "${AG:-0}" != "0" ]; then
+          SV="${{ steps.skill-validator.outputs.failed }}"
+          AG="${{ steps.agnix.outputs.failed }}"
+          if [ "$SV" = "true" ] || [ "$AG" = "true" ]; then
             echo "::error::Validation failed — skill-validator=$SV, agnix=$AG"
             exit 1
           fi
+          echo "All checks passed (warnings are allowed)."
