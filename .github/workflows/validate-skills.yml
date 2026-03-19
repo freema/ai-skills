@@ -28,10 +28,10 @@ jobs:
         id: changed
         if: github.event_name == 'pull_request'
         run: |
-          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'skills/' \
+          CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- 'skills/' \
             | grep -oP '^skills/[^/]+' \
             | sort -u \
-            | tr '\n' ' ')
+            | paste -sd ' ')
           echo "dirs=$CHANGED" >> "$GITHUB_OUTPUT"
           if [ -z "$CHANGED" ]; then
             echo "any=false" >> "$GITHUB_OUTPUT"
@@ -51,42 +51,64 @@ jobs:
       # --- skill-validator ---
 
       - name: Install skill-validator
-        run: |
-          go install github.com/agent-ecosystem/skill-validator/cmd/skill-validator@latest
+        run: go install github.com/agent-ecosystem/skill-validator/cmd/skill-validator@latest
         env:
           GOBIN: /usr/local/bin
 
       - name: Run skill-validator
+        id: skill-validator
         run: |
           EXIT=0
-          for dir in ${{ steps.targets.outputs.paths }}; do
+          IFS=' ' read -ra DIRS <<< "${{ steps.targets.outputs.paths }}"
+          for dir in "${DIRS[@]}"; do
+            [ -z "$dir" ] && continue
             echo "::group::skill-validator — $dir"
             skill-validator check --strict --emit-annotations -o markdown "$dir" \
               >> "$GITHUB_STEP_SUMMARY" || EXIT=$?
             echo "::endgroup::"
           done
+          echo "exit_code=$EXIT" >> "$GITHUB_OUTPUT"
           exit $EXIT
 
       # --- agnix ---
 
       - name: Install agnix
+        if: always()
         run: npm install -g agnix
 
       - name: Run agnix
+        id: agnix
+        if: always()
         run: |
           EXIT=0
-          for dir in ${{ steps.targets.outputs.paths }}; do
+          IFS=' ' read -ra DIRS <<< "${{ steps.targets.outputs.paths }}"
+          for dir in "${DIRS[@]}"; do
+            [ -z "$dir" ] && continue
             echo "::group::agnix — $dir"
             agnix --target claude-code --strict "$dir" || EXIT=$?
             echo "::endgroup::"
           done
-          # Generate SARIF for GitHub Code Scanning (best-effort)
-          agnix --target claude-code -f sarif skills/ > agnix-results.sarif 2>/dev/null || true
+          echo "exit_code=$EXIT" >> "$GITHUB_OUTPUT"
           exit $EXIT
 
-      - name: Upload SARIF (if generated)
+      - name: Generate SARIF
         if: always()
+        continue-on-error: true
+        run: agnix --target claude-code --format sarif -o agnix-results.sarif skills/
+
+      - name: Upload SARIF
+        if: always() && hashFiles('agnix-results.sarif') != ''
         continue-on-error: true
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: agnix-results.sarif
+
+      - name: Check results
+        if: always()
+        run: |
+          SV="${{ steps.skill-validator.outputs.exit_code }}"
+          AG="${{ steps.agnix.outputs.exit_code }}"
+          if [ "${SV:-0}" != "0" ] || [ "${AG:-0}" != "0" ]; then
+            echo "::error::Validation failed — skill-validator=$SV, agnix=$AG"
+            exit 1
+          fi
