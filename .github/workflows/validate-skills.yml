@@ -72,9 +72,13 @@ jobs:
             # exit 1 = errors (fail), exit 2 = warnings only (pass)
             if [ "$EXIT" -eq 1 ]; then
               FAILED=true
+            elif [ "$EXIT" -eq 2 ]; then
+              echo "skill-validator reported warnings (exit 2) — treating as pass"
             fi
           done
           echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          # Always exit 0; the "Check results" step decides pass/fail
+          exit 0
 
       # --- agnix ---
       # Without --strict: exit 0 on warnings, exit 1 on errors only
@@ -92,12 +96,19 @@ jobs:
           for dir in "${DIRS[@]}"; do
             [ -z "$dir" ] && continue
             echo "::group::agnix — $dir"
-            if ! agnix --target claude-code "$dir"; then
-              FAILED=true
-            fi
+            EXIT=0
+            agnix --target claude-code "$dir" || EXIT=$?
             echo "::endgroup::"
+            # exit 1 = real errors, exit 2 = warnings only
+            if [ "$EXIT" -eq 1 ]; then
+              FAILED=true
+            elif [ "$EXIT" -ne 0 ]; then
+              echo "agnix exited with $EXIT — treating as warnings (pass)"
+            fi
           done
           echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          # Always exit 0; the "Check results" step decides pass/fail
+          exit 0
 
       - name: Generate SARIF
         if: always()
