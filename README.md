@@ -9,6 +9,8 @@ A curated collection of AI agent skills for software development — compatible 
 | **[phaser-gamedev](skills/phaser-gamedev/)** | Build 2D browser games with Phaser 3 — scenes, sprites, Arcade/Matter physics, tilemaps, animations, keyboard input |
 | **[image-generation](skills/image-generation/)** | Generate game assets via Google Gemini API and process them into final sprite files |
 | **[pixellab](skills/pixellab/)** | Generate pixel art assets using PixelLab MCP — Wang tilesets, characters, map objects |
+| **[code-review](skills/code-review/)** | Sandwich-structured code reviews — motivating, clear, separates blockers from nitpicks |
+| **[jira](skills/jira/)** | Post code review verdicts to Jira issues, flag blockers, suggest workflow transitions |
 
 Each skill includes detailed reference material covering common pitfalls, anti-patterns, and production-ready code patterns.
 
@@ -92,19 +94,13 @@ alwaysApply: false
 
 ## Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full details including local validation setup.
+
 1. Fork this repository
 2. Add your skill directory under `skills/<skill-name>/`
 3. Create `SKILL.md` with frontmatter (name + description)
-4. Add detailed docs to `references/` subdirectory if needed
-5. Register your skill in both marketplace manifests
-6. Submit a pull request
-
-### Guidelines
-
-- Keep `SKILL.md` under 500 lines — move detailed docs to `references/` subdirectory
-- Write clear `description` fields — they determine when the AI loads the skill
-- Include practical code examples and anti-patterns
-- Test with both Claude Code and Cursor before submitting
+4. Run validators locally: `skill-validator check --strict skills/<skill-name>/` and `agnix --target claude-code --strict skills/<skill-name>/`
+5. Submit a pull request — CI validates automatically
 
 ## License
 
