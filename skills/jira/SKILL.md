@@ -1,5 +1,5 @@
 ---
-name: jira-review
+name: jira
 description: >
   Post code review verdicts to Jira. Use after a code review is done and the user
   wants to sync the result to Jira. Triggers on: "post to Jira", "update the ticket",
