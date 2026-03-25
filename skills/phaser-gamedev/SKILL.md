@@ -39,7 +39,8 @@ Read these BEFORE working on the relevant feature:
 | Scrolling platforms, custom body sizes | [arcade-physics.md](references/arcade-physics.md) (Static vs Dynamic section) |
 | Performance issues, object pooling | [performance.md](references/performance.md) |
 | Keyboard input, SPACE key, canvas focus | [keyboard-input.md](references/keyboard-input.md) |
-| Raycasting (Wolf3D-style FPS), doors, transparent gates | [raycasting.md](references/raycasting.md) |
+| Raycasting (Wolf3D-style FPS), doors, transparent gates, billboard sprites, enemy collision, secret walls, wall-mounted decals, torch lighting | [raycasting.md](references/raycasting.md) |
+| Procedural dungeon generation, BSP splitting, corridor carving, door placement, wall-door-wall, level validation | [procedural-dungeon-gen.md](references/procedural-dungeon-gen.md) |
 
 ---
 
@@ -138,6 +139,38 @@ this.physics.add.collider(this.enemyPool, this.trees);
 Phaser's keyboard only works when canvas has focus. When embedded in a React page, canvas loses focus constantly (user clicks tabs, buttons, scrolls). `keyboard.target: window` alone does NOT fix this.
 
 **Required**: Window-level capture-phase listener that re-focuses canvas + re-dispatches the event. Plus `addCapture(SPACE)` in each scene that uses SPACE.
+
+---
+
+## Graphics Overlays on Sprites (Brake Lights, Flames, Effects)
+
+When drawing Graphics effects (brake lights, nitro flames, etc.) on top of sprite-based game objects:
+
+### Sprite canvas ≠ car body
+
+AI-generated sprites have transparent padding — the visible content is smaller than the PNG canvas. Always **crop sprites first** (`process_sprite` with auto-crop) so the PNG edges match the pixel art edges. Otherwise, effects positioned at `halfW`/`halfH` will float outside the visible car.
+
+### Coordinate alignment
+
+After `g.translateCanvas(x, y)` + `g.rotateCanvas(angle)`, the local coordinate origin is the sprite center. Position effects relative to the **display size** (which maps to cropped sprite edges):
+
+```typescript
+const halfW = CAR_DRAW_W / 2;
+const halfH = CAR_DRAW_H / 2;
+// Brake lights at rear corners (car body is ~55% of canvas width)
+const sideX = halfW * 0.38;   // actual car edge, NOT halfW
+const rearY = halfH - 4;      // just inside rear edge
+```
+
+### Multi-layer effects look better
+
+- **Brake lights**: outer glow circle (large, low alpha) + inner 2×2px rect (bright)
+- **Nitro flame**: 3 layers — outer (orange), mid (yellow), core (white-yellow) with sin-based flicker
+- **Dual exhaust**: 2 separate small flames with independent flicker phases
+
+### Sprite rotation offset
+
+If a sprite faces south but `angle=0` means north: add `Math.PI` to sprite rotation, but keep Graphics `rotateCanvas(car.angle)` as-is (Graphics follow physics convention, sprite gets the visual flip).
 
 ---
 
