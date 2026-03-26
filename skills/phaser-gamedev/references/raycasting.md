@@ -12,6 +12,10 @@ Build a 2.5D first-person raycasting engine inside Phaser using `CanvasTexture` 
 - Transparent doors (see-through with painter's algorithm)
 - Doorjamb face detection
 - Wall-sliding collision
+- Billboard sprites — unified depth-sorted rendering
+- Enemy collision with player
+- Secret push-walls (rising into ceiling)
+- Wall-mounted decals (torches, signs) + torch lighting
 - Pointer lock (mouse look)
 - HUD + minimap in canvas
 - Weapon sprite rendering
@@ -459,6 +463,286 @@ private drawSword(ctx: CanvasRenderingContext2D, x: number, y: number, angle: nu
 ```
 
 Attack animation: cycle through 4 positions (wind-up, swing, impact, recovery) based on a timer. Add an arc trail effect on the impact frame.
+
+---
+
+## Billboard Sprites — Unified Depth-Sorted Rendering
+
+Enemies, items, projectiles, and any other "billboard" objects must be rendered in a SINGLE depth-sorted pass. Rendering them in separate passes (e.g. enemies first, items second) causes sprites to incorrectly show through each other.
+
+### The problem
+
+Separate render passes use only the **wall z-buffer** for occlusion. Sprites don't write to the z-buffer, so a later pass (items) doesn't know about sprites from an earlier pass (enemies). Result: items behind enemies bleed through.
+
+### Solution: Painter's algorithm across ALL sprite types
+
+Collect every visible billboard into one array, sort by distance (farthest first), and render back-to-front. Each sprite still checks the wall z-buffer per column — but ordering between sprites is handled by draw order.
+
+```typescript
+private renderSprites() {
+  // Camera matrix (compute once)
+  const dirX = Math.cos(this.pAngle);
+  const dirY = Math.sin(this.pAngle);
+  const planeX = -Math.sin(this.pAngle) * Math.tan(FOV / 2);
+  const planeY = Math.cos(this.pAngle) * Math.tan(FOV / 2);
+  const invDet = 1.0 / (planeX * dirY - planeY * dirX);
+
+  const sprites: { kind: number; ref: unknown; x: number; y: number; tY: number }[] = [];
+
+  // Collect ALL billboard types
+  for (const e of this.enemies) {
+    if (e.removed) continue;
+    const rx = e.x - this.px, ry = e.y - this.py;
+    const tY = invDet * (-planeY * rx + planeX * ry);
+    if (tY > 0.3) sprites.push({ kind: 0, ref: e, x: e.x, y: e.y, tY });
+  }
+  for (const item of this.items) {
+    const rx = item.x - this.px, ry = item.y - this.py;
+    const tY = invDet * (-planeY * rx + planeX * ry);
+    if (tY > 0.3) sprites.push({ kind: 1, ref: item, x: item.x, y: item.y, tY });
+  }
+  // ... projectiles, enemy projectiles, etc.
+
+  // Sort farthest first (painter's algorithm)
+  sprites.sort((a, b) => b.tY - a.tY);
+
+  for (const s of sprites) {
+    const rx = s.x - this.px, ry = s.y - this.py;
+    const tX = invDet * (dirY * rx - dirX * ry);
+    const screenX = Math.floor((RENDER_W / 2) * (1 + tX / s.tY));
+    switch (s.kind) {
+      case 0: this.renderOneEnemy(s.ref as Enemy, s.tY, screenX); break;
+      case 1: this.renderOneItem(s.ref as WorldItem, s.tY, screenX); break;
+      // ...
+    }
+  }
+}
+```
+
+### Key points
+
+- **Camera transform**: `tY` = perpendicular depth, `tX` = horizontal offset. Compute `invDet` once.
+- **screenX**: maps world-space tX/tY to screen column. Pre-compute in the loop and pass to helpers.
+- **Per-type helpers** (`renderOneEnemy`, `renderOneItem`, etc.) receive `(entity, tY, screenX)` and handle their own sprite dimensions + per-column drawing against the wall z-buffer.
+- **Minimum tY threshold**: 0.3 for large sprites (enemies, items), 0.1 for small ones (projectiles), to avoid division-by-zero artifacts when very close.
+
+### Enemy collision with player
+
+Enemies should block player movement (like Wolf3D). Each enemy has a `bodyRadius` (0.25–0.35 cells). Check circle-circle overlap per axis:
+
+```typescript
+private collidesWithEnemy(px: number, py: number): boolean {
+  const PLAYER_R = 0.2;
+  for (const e of this.enemies) {
+    if (e.state === "dead") continue;
+    const dx = px - e.x, dy = py - e.y;
+    const minDist = PLAYER_R + e.def.bodyRadius;
+    if (dx * dx + dy * dy < minDist * minDist) return true;
+  }
+  return false;
+}
+
+// In movement — check per axis (allows wall-sliding along enemies)
+if (isPassable(...) && !this.collidesWithEnemy(nx, this.py)) this.px = nx;
+if (isPassable(...) && !this.collidesWithEnemy(this.px, ny)) this.py = ny;
+```
+
+### Secret push-walls (rising into ceiling)
+
+Secret walls use the same overlay technique as transparent gates. When opening:
+1. Ray passes through the cell (record hit for overlay)
+2. Background wall behind renders normally
+3. Secret wall renders as overlay with vertical offset: `yOffset = openAmount * lineHeight`
+4. Passable once `openAmount >= 0.5` (half risen)
+5. Never show doorjamb coloring on closed secrets (would reveal the secret)
+
+---
+
+## Wall-Mounted Decals (Torches, Signs, etc.)
+
+Render sprites directly ON wall surfaces during the raycasting pass — not as floating billboards. This is essential for torches, signs, posters, or any decoration that should appear flat against a wall.
+
+### Data model
+
+Each wall decal is defined by which cell face it's on, plus a horizontal offset (0–1) along that face:
+
+```typescript
+interface WallTorch {
+  r: number; c: number;              // map cell
+  face: "N" | "S" | "E" | "W";      // which face of the cell
+  offset: number;                    // 0–1 horizontal position on face (0.5 = centered)
+  flickerPhase: number;              // animation state
+  worldX: number; worldY: number;    // derived world position (for lighting)
+}
+```
+
+### Efficient lookup with Map
+
+During raycasting, each column hits a specific cell + face. Use a `Map<string, WallTorch>` keyed by `"r,c,face"` for O(1) lookup:
+
+```typescript
+private torchLookup = new Map<string, WallTorch>();
+
+// In create():
+for (const spawn of WALL_TORCH_SPAWNS) {
+  const torch: WallTorch = {
+    r: spawn.r, c: spawn.c,
+    face: spawn.face,
+    offset: spawn.offset ?? 0.5,
+    flickerPhase: Math.random() * Math.PI * 2,
+    worldX: /* derived */, worldY: /* derived */,
+  };
+  this.torchLookup.set(`${spawn.r},${spawn.c},${spawn.face}`, torch);
+}
+```
+
+### Face determination from DDA variables
+
+After a wall hit, determine which face the ray struck using `side`, `stepX`, `stepY`:
+
+```
+side=0, stepX=1  → ray going right → hit WEST face
+side=0, stepX=-1 → ray going left  → hit EAST face
+side=1, stepY=1  → ray going down  → hit NORTH face
+side=1, stepY=-1 → ray going up    → hit SOUTH face
+```
+
+### Wall hit fraction (texX)
+
+Compute where along the face (0–1) the ray hit:
+
+```typescript
+const frac = side === 0
+  ? hitWorldY - Math.floor(hitWorldY)   // vertical boundary → use Y fraction
+  : hitWorldX - Math.floor(hitWorldX);  // horizontal boundary → use X fraction
+```
+
+### Rendering inline with raycasting
+
+After rendering the wall column, check if a decal exists on this face. If the hit fraction falls within the decal's width, render the decal slice:
+
+```typescript
+// Inside the per-column loop, AFTER drawing the wall:
+if (!isDoorHit && hit > 0) {
+  const face = side === 0
+    ? (stepX === 1 ? "W" : "E")
+    : (stepY === 1 ? "N" : "S");
+
+  const torch = this.torchLookup.get(`${mapY},${mapX},${face}`);
+  if (torch) {
+    const frac = side === 0
+      ? hitWY - Math.floor(hitWY)
+      : hitWX - Math.floor(hitWX);
+
+    const halfW = TORCH_WIDTH / 2; // e.g. 0.09
+    if (frac >= torch.offset - halfW && frac <= torch.offset + halfW) {
+      // nx = normalized X within the decal (0–1)
+      const nx = (frac - (torch.offset - halfW)) / TORCH_WIDTH;
+      this.renderWallTorchSlice(ctx, col, drawStart, sliceH, nx, fogFactor, torch);
+    }
+  }
+}
+```
+
+### Decal slice rendering (torch example)
+
+Each column of the decal is drawn procedurally. The `nx` parameter (0–1) represents horizontal position within the decal:
+
+```typescript
+private renderWallTorchSlice(
+  ctx: CanvasRenderingContext2D,
+  col: number, drawStart: number, sliceH: number,
+  nx: number, fog: number, torch: WallTorch,
+) {
+  // Bracket (metal mount) — bottom 15% of decal
+  const bracketTop = drawStart + Math.floor(sliceH * 0.55);
+  const bracketH = Math.floor(sliceH * 0.15);
+  if (bracketH > 0) {
+    ctx.fillStyle = applyFog("#555", fog);
+    ctx.fillRect(col, bracketTop, 1, bracketH);
+  }
+
+  // Stick — middle section
+  const stickW = 0.3; // center 30% of decal width
+  if (nx > 0.5 - stickW / 2 && nx < 0.5 + stickW / 2) {
+    const stickTop = drawStart + Math.floor(sliceH * 0.35);
+    const stickH = Math.floor(sliceH * 0.2);
+    ctx.fillStyle = applyFog("#8B6914", fog);
+    ctx.fillRect(col, stickTop, 1, stickH);
+  }
+
+  // Flame — layered ellipses (outer glow → core → white-hot tip)
+  const flicker = 0.8 + Math.sin(torch.flickerPhase) * 0.2;
+  const cx = 0.5; // flame centered
+  const dx = Math.abs(nx - cx);
+
+  // Outer flame
+  if (dx < 0.4 * flicker) {
+    const intensity = 1 - dx / (0.4 * flicker);
+    const flameTop = drawStart + Math.floor(sliceH * (0.15 + (1 - intensity) * 0.15));
+    const flameH = Math.floor(sliceH * 0.2 * intensity);
+    ctx.fillStyle = applyFog("#ff6600", fog * 0.3); // less fog on flames
+    ctx.fillRect(col, flameTop, 1, flameH);
+  }
+
+  // Core + white-hot tip follow same pattern with tighter dx thresholds
+}
+```
+
+### Torch lighting system
+
+Extend `applyFog()` with a warm light parameter. Compute per-column based on player distance to nearby torches:
+
+```typescript
+// Extended fog function with warm torch tint
+private applyFog(hex: string, fog: number, torchLight = 0): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const m = 1 - fog * 0.8;
+  // Warm RGB tint (255, 150, 50) weighted by torchLight intensity
+  const lr = Math.min(255, Math.floor(r * m + torchLight * 255));
+  const lg = Math.min(255, Math.floor(g * m + torchLight * 150));
+  const lb = Math.min(255, Math.floor(b * m + torchLight * 50));
+  return `rgb(${lr},${lg},${lb})`;
+}
+
+// Compute torch light at a world position
+private getTorchLight(wx: number, wy: number): number {
+  let light = 0;
+  for (const t of this.wallTorches) {
+    const dx = wx - t.worldX, dy = wy - t.worldY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < TORCH_LIGHT_RADIUS) {
+      const flicker = 0.85 + Math.sin(t.flickerPhase) * 0.15;
+      light += (1 - dist / TORCH_LIGHT_RADIUS) * 0.25 * flicker;
+    }
+  }
+  return Math.min(light, 0.5); // cap to avoid blowout
+}
+```
+
+### Deriving world position for lighting
+
+Each torch needs a world-space coordinate (offset slightly from the wall surface) for distance-based lighting:
+
+```typescript
+// Offset 0.15 units outward from the wall face
+switch (face) {
+  case "N": worldX = c + offset; worldY = r + 0.15; break;    // top face → offset down
+  case "S": worldX = c + offset; worldY = r + 1 - 0.15; break; // bottom → offset up
+  case "E": worldX = c + 1 - 0.15; worldY = r + offset; break; // right → offset left
+  case "W": worldX = c + 0.15; worldY = r + offset; break;     // left → offset right
+}
+```
+
+### Key takeaways
+
+- **Not billboards**: Wall decals render during the raycasting column loop, not in the sprite pass. They use the wall's perpendicular distance and have no z-buffer issues.
+- **O(1) lookup**: Key by `"r,c,face"` — each wall column tests at most one lookup.
+- **Hit fraction → decal UV**: The same `texX` fraction used for texture mapping tells you if the column overlaps the decal and where within it.
+- **Lighting is additive**: Torch light warms the wall color via RGB weighting, applied alongside distance fog — not replacing it.
+- **Flicker phase**: Each torch gets a random initial phase, updated with `+= delta * speed` per frame, giving independent flicker animation.
 
 ---
 
