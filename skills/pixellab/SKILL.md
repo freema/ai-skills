@@ -202,6 +202,125 @@ print(f'Saved {len(data[\"images\"])} frames')
 
 ---
 
+## Saving Images from MCP Responses (CRITICAL)
+
+PixelLab MCP is a **remote server** — it returns base64/URL data but CANNOT write files to disk.
+
+### Rules
+
+1. **NEVER use the Write tool for image data** — Write is text-only, it corrupts binary PNG → produces zero-filled garbage files
+2. **ALWAYS use `./scripts/pixellab.sh save-b64`** to save base64 image data from MCP responses
+3. **ALWAYS use `./scripts/pixellab.sh download`** to download from PixelLab URLs
+4. **ALWAYS verify** saved files with `file <path>` — must show `PNG image data`, not `data`
+
+### Workflow: MCP tool → save to disk
+
+```bash
+# 1. Get base64 data from MCP response (e.g. get_tiles_pro, get_character)
+# 2. Save each image via pixellab.sh:
+
+./scripts/pixellab.sh save-b64 "<base64string>" public/assets/games/mygame/tile.png
+
+# Or download from URL:
+./scripts/pixellab.sh download "https://api.pixellab.ai/..." public/assets/games/mygame/tile.png
+
+# 3. Verify:
+file public/assets/games/mygame/tile.png
+# → must say "PNG image data, ..."
+```
+
+### Why this matters
+In a previous incident, Claude used the Write tool to save PixelLab base64 data.
+Write tool only handles UTF-8 text — binary PNG bytes get corrupted to zero-filled buffers.
+Result: 145 broken files that looked like PNGs but contained only null bytes.
+
+---
+
+## Animated Thumbnails & Menu Backgrounds
+
+### Overview
+Games can have animated thumbnails (shown on catalog page) and animated menu backgrounds (shown in Phaser menu scene). Both use the `animate-with-text-v3` endpoint via `pixellab.sh animate`.
+
+### Animated Thumbnail
+
+Creates a looping animated WebP from an existing static thumbnail.
+
+```bash
+# 1. Resize source image to ≤256px (API limit) — use sips on macOS
+sips -z 192 256 public/assets/games/mygame/thumbnail.png --out /tmp/thumb-resized.png
+
+# 2. Generate animation frames
+./scripts/pixellab.sh animate /tmp/thumb-resized.png "description of subtle animation" 8 /tmp/thumb-anim
+
+# 3. Convert frames to animated WebP
+./scripts/pixellab.sh webp /tmp/thumb-anim/ public/assets/games/mygame/thumbnail-animated.webp 150
+
+# 4. Update registry.ts to point to the animated version
+#    thumbnailUrl: "/assets/games/mygame/thumbnail-animated.webp",
+```
+
+**Notes:**
+- API max size: 256×256. Resize before sending.
+- Browser `<img>` tags play animated WebP natively — no JS needed.
+- Frame count 8 = good balance (9 frames returned incl. original).
+- Duration 150ms/frame = smooth loop.
+
+### Animated Menu Background (Phaser)
+
+Creates frame-by-frame animation for the Phaser menu scene.
+
+```bash
+# 1. Resize bg to ≤256px
+sips -z 256 192 public/assets/games/mygame/bg.png --out /tmp/bg-resized.png
+
+# 2. Generate frames
+./scripts/pixellab.sh animate /tmp/bg-resized.png "subtle ambient animation" 8 /tmp/bg-anim
+
+# 3. Copy frames to game assets
+for i in $(seq 0 8); do
+  cp /tmp/bg-anim/frame-${i}.png public/assets/games/mygame/menu-bg-${i}.png
+done
+
+# 4. Optionally create animated WebP for non-Phaser use
+./scripts/pixellab.sh webp /tmp/bg-anim/ public/assets/games/mygame/menu-bg.webp 150
+```
+
+**Phaser integration (boot.ts):**
+```typescript
+// Load frames
+for (let i = 0; i < 9; i++) {
+  this.load.image(`menu-bg-${i}`, `${base}/menu-bg-${i}.png`);
+}
+
+// Create animation (in create())
+if (this.textures.exists("menu-bg-0")) {
+  this.anims.create({
+    key: "menu-bg-anim",
+    frames: Array.from({ length: 9 }, (_, i) => ({ key: `menu-bg-${i}` })),
+    frameRate: 6,
+    repeat: -1,
+  });
+}
+```
+
+**Phaser integration (menu.ts):**
+```typescript
+if (this.anims.exists("menu-bg-anim")) {
+  this.add.sprite(width / 2, height / 2, "menu-bg-0")
+    .setDisplaySize(width, height)
+    .setAlpha(0.65)
+    .setDepth(-1)
+    .play("menu-bg-anim");
+}
+```
+
+### Animation prompt tips
+- **Thumbnails**: "gems sparkling, petals drifting" — keep subtle, scene should stay recognizable
+- **Backgrounds**: "wind blowing, ambient movement" — no drastic changes between frames
+- Avoid "walking", "running" etc. — those are for sprite animation, not scenes
+
+---
+
 ## General Tips
 - Always check generation status with `get_*` before downloading
 - Use `seed` parameter for reproducible results
