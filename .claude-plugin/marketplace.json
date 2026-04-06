@@ -44,6 +44,19 @@
       "license": "MIT",
       "keywords": ["pixellab", "pixel-art", "tilesets", "game-assets"],
       "category": "development"
+    },
+    {
+      "name": "pixellab-api",
+      "source": "./skills/pixellab-api",
+      "description": "PixelLab API v2 direct access — animate sprites, generate UI elements, edit pixel art, rotate/resize, style matching. Complements MCP.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["pixellab", "pixel-art", "animation", "ui-generation", "sprite-editing", "game-assets"],
+      "category": "development"
     }
   ]
 }

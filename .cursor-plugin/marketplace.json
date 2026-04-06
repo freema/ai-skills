@@ -22,6 +22,11 @@
       "name": "pixellab",
       "source": "./skills/pixellab",
       "description": "Generate pixel art assets using PixelLab MCP — Wang tilesets, characters, map objects."
+    },
+    {
+      "name": "pixellab-api",
+      "source": "./skills/pixellab-api",
+      "description": "PixelLab API v2 direct access — animate sprites, generate UI elements, edit pixel art, rotate/resize, style matching."
     }
   ]
 }
