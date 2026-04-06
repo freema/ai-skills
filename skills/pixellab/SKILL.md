@@ -4,21 +4,23 @@
 
 Read these BEFORE working on the relevant feature:
 
-| When working on... | Read first |
-|--------------------|------------|
+| When working on...                          | Read first                                                      |
+| ------------------------------------------- | --------------------------------------------------------------- |
 | Sidescroller platform tiles (2D platformer) | [sidescroller-tilesets.md](references/sidescroller-tilesets.md) |
-| Top-down Wang tilesets (strategy/RPG maps) | See Wang section below |
+| Top-down Wang tilesets (strategy/RPG maps)  | See Wang section below                                          |
 
 ---
 
 ## Sidescroller Tileset (2D Platformers)
 
 ### When to use
+
 - Side-view platform tiles for platformer/runner games
 - Ground, floating platforms, crumbling platforms
 - **Read [sidescroller-tilesets.md](references/sidescroller-tilesets.md) for full reference**
 
 ### Quick summary
+
 - `create_sidescroller_tileset` → 16 Wang tiles, 32×32, transparent bg
 - `lower_description` = material, `transition_description` = surface decoration
 - `transition_size`: 0.25 (light) or 0.5 (heavy surface)
@@ -30,11 +32,13 @@ Read these BEFORE working on the relevant feature:
 ## Wang Tileset (Top-Down Maps) — PREFERRED for terrain
 
 ### When to use
+
 - Path/road vs terrain transitions (dirt↔stone, grass↔water, etc.)
 - Any two-terrain autotiling system
 - Replaces ALL manual corner/T-junction/straight tile work
 
 ### Workflow
+
 1. **Generate**: `create_topdown_tileset`
    - `lower_description` = ground terrain (e.g. "dark brown dirt path")
    - `upper_description` = elevated terrain (e.g. "dark grey stone floor")
@@ -46,6 +50,7 @@ Read these BEFORE working on the relevant feature:
    - Takes ~100 seconds
 
 2. **Download**: PNG (4×4 spritesheet, 128×128) + metadata JSON
+
    ```bash
    curl --fail -o wang-tileset.png "https://api.pixellab.ai/mcp/tilesets/{id}/image"
    curl --fail -o wang-tileset.json "https://api.pixellab.ai/mcp/tilesets/{id}/metadata"
@@ -54,19 +59,28 @@ Read these BEFORE working on the relevant feature:
 3. **Build frame lookup** from JSON:
    - Each tile has `corners: {NW, NE, SW, SE}` = "upper" | "lower"
    - Wang index = NW×8 + NE×4 + SW×2 + SE×1 (upper=1, lower=0)
-   - Frame = (bounding_box.y/32)*4 + (bounding_box.x/32)
+   - Frame = (bounding_box.y/32)\*4 + (bounding_box.x/32)
    - Build array: `WANG_FRAME[wangIdx] = frame`
 
 4. **Render in Phaser**:
+
    ```typescript
    // boot.ts
-   this.load.spritesheet("wang-tileset", url, { frameWidth: 32, frameHeight: 32 });
+   this.load.spritesheet("wang-tileset", url, {
+     frameWidth: 32,
+     frameHeight: 32,
+   });
 
    // game.ts — vertex terrain algorithm
    // Vertex (vr,vc) sits between cells (vr-1,vc-1), (vr-1,vc), (vr,vc-1), (vr,vc)
    // Vertex = 0 (lower) if ANY surrounding cell is target terrain, else 1 (upper)
    const vertex = (vr, vc) => {
-     return (isPath(vr-1,vc-1) || isPath(vr-1,vc) || isPath(vr,vc-1) || isPath(vr,vc)) ? 0 : 1;
+     return isPath(vr - 1, vc - 1) ||
+       isPath(vr - 1, vc) ||
+       isPath(vr, vc - 1) ||
+       isPath(vr, vc)
+       ? 0
+       : 1;
    };
 
    // For each grid cell:
@@ -79,6 +93,7 @@ Read these BEFORE working on the relevant feature:
    ```
 
 ### Chaining tilesets
+
 - Response includes `base_tile_ids.upper` and `.lower`
 - Use upper ID as `lower_base_tile_id` in next tileset for seamless multi-terrain:
   - Tileset 1: dirt → stone (get stone base ID)
@@ -86,6 +101,7 @@ Read these BEFORE working on the relevant feature:
 - **Note**: Chaining via `lower_base_tile_id` param may error — generate independently with matching descriptions instead
 
 ### Multi-tileset layering (terrain variety)
+
 - All PixelLab Wang tilesets use **identical tile layout** → same `WANG_FRAME` lookup for all
 - **Layer 1 (base)**: render full grid (e.g., void → snow for arena border)
 - **Layer 2+ (overlay)**: generate random blob shapes, render with second tileset, **skip `wangIdx === 0`** (all-lower = base shows through)
@@ -93,6 +109,7 @@ Read these BEFORE working on the relevant feature:
 - Describe overlay tileset lower terrain to MATCH base tileset upper terrain for seamless blending
 
 ### Download gotcha
+
 - Wang tileset PNG download: always `curl -L --fail` (API returns 302 redirect, without `-L` you get 0 bytes)
 
 ---
@@ -100,21 +117,25 @@ Read these BEFORE working on the relevant feature:
 ## Tiles Pro (Individual Tiles)
 
 ### When to use
+
 - UI elements, decorations, standalone objects
 - When you need specific tile variants (NOT terrain transitions)
 
 ### Key settings
+
 - `tile_type: "square_topdown"`, `tile_view: "top-down"`, `tile_size: 32`
 - **Always `outline: "lineless"`** — user hates borders
 - Number each tile in description: `"1). tile A 2). tile B 3). tile C"`
 - `n_tiles` must match description count
 
 ### Gotcha: Small pickups/projectiles look BAD as tiles
+
 - 16×16 tile squares look blocky when used as tiny in-game pickups (xp gems, health orbs) or projectiles
 - **Programmatic shapes** (circles, triangles via Graphics API) look BETTER for small game objects
 - Only use Tiles Pro for objects that are displayed at actual tile size (32×32+) like decorations, UI elements
 
 ### Gotcha: Corner tile orientation
+
 - PixelLab corner tiles often have WRONG orientation vs their name
 - "corner south to east" may actually show path going west→south
 - **Always verify visually** at 10× zoom before using
@@ -125,6 +146,7 @@ Read these BEFORE working on the relevant feature:
 ## Characters & Enemies
 
 ### Humanoid/Quadruped — use `create_character`
+
 - `body_type: "humanoid"` — bipedal (people, robots, knights)
 - `body_type: "quadruped"` + `template` — 4-legged (bear, cat, dog, horse, lion)
 - South = default facing, East = side view, North = back view
@@ -132,6 +154,7 @@ Read these BEFORE working on the relevant feature:
 - `animate_character` for walk/run/attack frames
 
 ### Non-humanoid creatures (blobs, slimes, mushrooms) — use `create_map_object`
+
 - **NEVER use `create_character` for blobs/slimes** — humanoid template forces legs!
 - Generate each direction as separate map object (south, east, north)
 - Generate walk frames as separate map objects with pose variations (squished, stretched, tilted)
@@ -143,6 +166,7 @@ Read these BEFORE working on the relevant feature:
 ## Map Objects
 
 ### `create_map_object`
+
 - Generates objects with transparent background
 - Can style-match against existing map (provide background_image)
 - Good for: barrels, torches, chests, decorations
@@ -159,22 +183,22 @@ API key: `PIXELLAB_API_KEY` from `.env`
 
 ### When to use API v2 instead of MCP
 
-| Need | Use |
-|------|-----|
+| Need                                       | Use                                                 |
+| ------------------------------------------ | --------------------------------------------------- |
 | Animate existing sprite (walk/attack/idle) | **API: `animate-with-text-v3`** (sync, 4-16 frames) |
-| UI elements (buttons, bars, frames) | **API: `generate-ui-v2`** (async) |
-| General pixel art from text | **API: `generate-image-v2`** (async, multi-result) |
-| Match style of existing assets | **API: `generate-with-style-v2`** (async) |
-| Edit/modify existing sprite | **API: `edit-images-v2`** (async) |
-| Remove background from sprite | **API: `remove-background`** (sync) |
-| Convert photo to pixel art | **API: `image-to-pixelart`** (sync) |
-| Region-based editing with mask | **API: `inpaint-v3`** (async) |
-| Smart resize pixel art | **API: `resize`** (sync) |
-| Rotate sprite direction | **API: `rotate`** (sync) |
-| Characters with animations | MCP: `create_character` + `animate_character` |
-| Wang tilesets | MCP: `create_topdown_tileset` |
-| Platformer tilesets | MCP: `create_sidescroller_tileset` |
-| Map objects (barrels, chests) | MCP: `create_map_object` |
+| UI elements (buttons, bars, frames)        | **API: `generate-ui-v2`** (async)                   |
+| General pixel art from text                | **API: `generate-image-v2`** (async, multi-result)  |
+| Match style of existing assets             | **API: `generate-with-style-v2`** (async)           |
+| Edit/modify existing sprite                | **API: `edit-images-v2`** (async)                   |
+| Remove background from sprite              | **API: `remove-background`** (sync)                 |
+| Convert photo to pixel art                 | **API: `image-to-pixelart`** (sync)                 |
+| Region-based editing with mask             | **API: `inpaint-v3`** (async)                       |
+| Smart resize pixel art                     | **API: `resize`** (sync)                            |
+| Rotate sprite direction                    | **API: `rotate`** (sync)                            |
+| Characters with animations                 | MCP: `create_character` + `animate_character`       |
+| Wang tilesets                              | MCP: `create_topdown_tileset`                       |
+| Platformer tilesets                        | MCP: `create_sidescroller_tileset`                  |
+| Map objects (barrels, chests)              | MCP: `create_map_object`                            |
 
 ### Quick animate-with-text example (most useful for games)
 
@@ -230,6 +254,7 @@ file public/assets/games/mygame/tile.png
 ```
 
 ### Why this matters
+
 In a previous incident, Claude used the Write tool to save PixelLab base64 data.
 Write tool only handles UTF-8 text — binary PNG bytes get corrupted to zero-filled buffers.
 Result: 145 broken files that looked like PNGs but contained only null bytes.
@@ -239,6 +264,7 @@ Result: 145 broken files that looked like PNGs but contained only null bytes.
 ## Animated Thumbnails & Menu Backgrounds
 
 ### Overview
+
 Games can have animated thumbnails (shown on catalog page) and animated menu backgrounds (shown in Phaser menu scene). Both use the `animate-with-text-v3` endpoint via `pixellab.sh animate`.
 
 ### Animated Thumbnail
@@ -260,6 +286,7 @@ sips -z 192 256 public/assets/games/mygame/thumbnail.png --out /tmp/thumb-resize
 ```
 
 **Notes:**
+
 - API max size: 256×256. Resize before sending.
 - Browser `<img>` tags play animated WebP natively — no JS needed.
 - Frame count 8 = good balance (9 frames returned incl. original).
@@ -286,6 +313,7 @@ done
 ```
 
 **Phaser integration (boot.ts):**
+
 ```typescript
 // Load frames
 for (let i = 0; i < 9; i++) {
@@ -304,9 +332,11 @@ if (this.textures.exists("menu-bg-0")) {
 ```
 
 **Phaser integration (menu.ts):**
+
 ```typescript
 if (this.anims.exists("menu-bg-anim")) {
-  this.add.sprite(width / 2, height / 2, "menu-bg-0")
+  this.add
+    .sprite(width / 2, height / 2, "menu-bg-0")
     .setDisplaySize(width, height)
     .setAlpha(0.65)
     .setDepth(-1)
@@ -315,6 +345,7 @@ if (this.anims.exists("menu-bg-anim")) {
 ```
 
 ### Animation prompt tips
+
 - **Thumbnails**: "gems sparkling, petals drifting" — keep subtle, scene should stay recognizable
 - **Backgrounds**: "wind blowing, ambient movement" — no drastic changes between frames
 - Avoid "walking", "running" etc. — those are for sprite animation, not scenes
@@ -322,6 +353,7 @@ if (this.anims.exists("menu-bg-anim")) {
 ---
 
 ## General Tips
+
 - Always check generation status with `get_*` before downloading
 - Use `seed` parameter for reproducible results
 - B2 storage URLs are permanent — can reference directly
