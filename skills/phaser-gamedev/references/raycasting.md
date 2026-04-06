@@ -448,21 +448,116 @@ private renderMinimap() {
 
 ---
 
-## Programmatic Weapon Sprite
+## Weapon Sprite Rendering
 
-Draw the weapon using canvas 2D drawing primitives. Use `ctx.save/translate/rotate/restore` for attack animation frames.
+All weapons (including melee) use sprite-based rendering. Each weapon has 4–5 frames: idle + attack frames. Sprites are ~64×64px pixel art on transparent background, first-person view from below.
 
 ```typescript
-private drawSword(ctx: CanvasRenderingContext2D, x: number, y: number, angle: number) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(angle);
-  // Draw handle, crossguard, blade using fillRect
-  ctx.restore();
+private renderWeapon() {
+  const frames = this.weaponSprites[this.currentWeapon];
+  const frameIdx = this.attacking ? this.attackFrame + 1 : 0;
+  const img = frames?.[frameIdx];
+  if (!img) return;
+
+  const size = 90;
+  let oy = this.attacking ? [3, 16, 8, 2][this.attackFrame] : 0;
+  const dx = bx - size / 2;
+  const dy = by - size + 12 + oy;
+  ctx.drawImage(img, dx, dy, size, size);
 }
 ```
 
-Attack animation: cycle through 4 positions (wind-up, swing, impact, recovery) based on a timer. Add an arc trail effect on the impact frame.
+### First-person weapon sprite generation rules
+
+- **No handle/hilt/crossguard visible** — the hand holds the weapon below the frame edge
+- **Blade/tip anchored at bottom** — base exits frame at bottom where the grip would be
+- **Slash frame**: blade sweeps diagonally (e.g. bottom-right → upper-left), NOT floating horizontally like a thrown weapon
+- **Consistent color palette** across all frames — generate idle first, use as reference for other frames
+- Use PixelForge with `chromakey` background and existing weapon sprites as `references`
+
+---
+
+## Camera Plane Method (Fisheye Fix)
+
+The angular approach (`rayAngle = playerAngle + offset`) introduces subtle fisheye even with `cos` correction. The **camera plane method** (lodev.org) avoids this entirely by constructing non-unit ray direction vectors:
+
+```typescript
+const dirX = Math.cos(this.pAngle);
+const dirY = Math.sin(this.pAngle);
+const planeX = -Math.sin(this.pAngle) * Math.tan(FOV / 2);
+const planeY = Math.cos(this.pAngle) * Math.tan(FOV / 2);
+
+for (let col = 0; col < RENDER_W; col++) {
+  const cameraX = (2 * col) / RENDER_W - 1;
+  const rayDirX = dirX + cameraX * planeX;
+  const rayDirY = dirY + cameraX * planeY;
+  // DDA with these ray directions — perpDist is already correct
+}
+```
+
+---
+
+## Texture Mapping Clipping Fix
+
+When a wall column is taller than the viewport, `drawStart` and `drawEnd` are clamped. If `drawImage` maps the FULL source texture to the clamped destination, the texture **squishes** instead of clipping properly.
+
+**WRONG** — squishes texture into visible area:
+```typescript
+ctx.drawImage(img, texX, 0, 1, texH, col, drawStart, 1, sliceH);
+```
+
+**CORRECT** — compute source rect from the visible portion:
+```typescript
+const wallTop = Math.floor((RENDER_H - lineHeight) / 2);
+const texYStart = ((drawStart - wallTop) / lineHeight) * texH;
+const texSliceH = (sliceH / lineHeight) * texH;
+ctx.drawImage(img, texX, texYStart, 1, texSliceH, col, drawStart, 1, sliceH);
+```
+
+This applies to ALL billboard sprites (enemies, items, props) — not just walls. When sprite `drawStartY`/`drawEndY` are clamped to viewport, compute the source rect proportionally.
+
+---
+
+## Enemy Animation & Collision
+
+### animTimer for sprite animation
+
+Enemies need TWO timers: `stateTimer` (state-specific logic, counts down) and `animTimer` (always increments, drives sprite frame selection, resets on state change).
+
+```typescript
+frameIdx = Math.floor(e.animTimer / frameTime) % frames.length;
+```
+
+Reset `animTimer = 0` at EVERY state transition. Walk animation bob adds visual movement cue:
+```typescript
+if (e.state === "chase") {
+  const bobAmplitude = Math.max(1, Math.floor(spriteH * 0.04));
+  bobOffset = Math.floor(Math.sin(e.animTimer * 0.012) * bobAmplitude);
+}
+```
+
+### Enemy-prop and enemy-enemy collision
+
+After enemy movement update, push enemies out of solid props and away from each other:
+
+```typescript
+// Enemy–prop (full push on enemy)
+const push = (minDist - dist) / dist;
+e.x += dx * push; e.y += dy * push;
+
+// Enemy–enemy (half push on each)
+const push = (minDist - dist) / dist * 0.5;
+e.x += dx * push; other.x -= dx * push;
+```
+
+---
+
+## Level Data Integrity Patterns
+
+- **Derive totalSecrets from map**: Count `DOOR_SECRET` tiles at runtime, don't trust JSON/constants
+- **Treasure completion**: Only count score-giving items (gold, chalice, crown, chest, cross, jewels) — not keys, weapons, potions, orbs
+- **Boss gating**: Use `bossType?: string` in LevelData, not hardcoded enemy IDs
+- **Validate item/torch positions**: Items must be on floor tiles (map value 0), torches must be on wall tiles (map value > 0)
 
 ---
 

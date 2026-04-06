@@ -39,7 +39,7 @@ Read these BEFORE working on the relevant feature:
 | Scrolling platforms, custom body sizes | [arcade-physics.md](references/arcade-physics.md) (Static vs Dynamic section) |
 | Performance issues, object pooling | [performance.md](references/performance.md) |
 | Keyboard input, SPACE key, canvas focus | [keyboard-input.md](references/keyboard-input.md) |
-| Raycasting (Wolf3D-style FPS), doors, transparent gates, billboard sprites, enemy collision, secret walls, wall-mounted decals, torch lighting | [raycasting.md](references/raycasting.md) |
+| Raycasting (Wolf3D-style FPS), doors, transparent gates, billboard sprites, enemy collision, secret walls, wall-mounted decals, torch lighting, fisheye fix, texture clipping, weapon sprites, enemy animation, level data integrity | [raycasting.md](references/raycasting.md) |
 | Procedural dungeon generation, BSP splitting, corridor carving, door placement, wall-door-wall, level validation | [procedural-dungeon-gen.md](references/procedural-dungeon-gen.md) |
 
 ---
