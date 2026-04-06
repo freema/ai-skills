@@ -150,6 +150,58 @@ Read these BEFORE working on the relevant feature:
 
 ---
 
+## PixelLab API v2 — Direct Endpoints (NOT in MCP)
+
+For tools not available through MCP, call the REST API directly via `curl`.
+API key: `PIXELLAB_API_KEY` from `.env`
+
+**Full reference:** [api-v2-extra.md](references/api-v2-extra.md)
+
+### When to use API v2 instead of MCP
+
+| Need | Use |
+|------|-----|
+| Animate existing sprite (walk/attack/idle) | **API: `animate-with-text-v3`** (sync, 4-16 frames) |
+| UI elements (buttons, bars, frames) | **API: `generate-ui-v2`** (async) |
+| General pixel art from text | **API: `generate-image-v2`** (async, multi-result) |
+| Match style of existing assets | **API: `generate-with-style-v2`** (async) |
+| Edit/modify existing sprite | **API: `edit-images-v2`** (async) |
+| Remove background from sprite | **API: `remove-background`** (sync) |
+| Convert photo to pixel art | **API: `image-to-pixelart`** (sync) |
+| Region-based editing with mask | **API: `inpaint-v3`** (async) |
+| Smart resize pixel art | **API: `resize`** (sync) |
+| Rotate sprite direction | **API: `rotate`** (sync) |
+| Characters with animations | MCP: `create_character` + `animate_character` |
+| Wang tilesets | MCP: `create_topdown_tileset` |
+| Platformer tilesets | MCP: `create_sidescroller_tileset` |
+| Map objects (barrels, chests) | MCP: `create_map_object` |
+
+### Quick animate-with-text example (most useful for games)
+
+```bash
+source .env
+FRAME=$(base64 -i public/assets/games/mygame/character-south.png)
+
+curl -s -X POST https://api.pixellab.ai/v2/animate-with-text-v3 \
+  -H "Authorization: Bearer $PIXELLAB_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"first_frame\": {\"base64\":\"$FRAME\", \"format\":\"png\"},
+    \"action\": \"walking forward\",
+    \"frame_count\": 8,
+    \"no_background\": true
+  }" | python3 -c "
+import sys, json, base64
+data = json.load(sys.stdin)
+for i, img in enumerate(data['images']):
+    with open(f'frame_{i}.png', 'wb') as f:
+        f.write(base64.b64decode(img['base64']))
+print(f'Saved {len(data[\"images\"])} frames')
+"
+```
+
+---
+
 ## General Tips
 - Always check generation status with `get_*` before downloading
 - Use `seed` parameter for reproducible results
