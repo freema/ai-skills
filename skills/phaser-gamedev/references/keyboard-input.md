@@ -7,10 +7,10 @@ Phaser 3's `KeyboardManager.onKeyDown` **skips events where `event.defaultPreven
 ```javascript
 // Phaser source — KeyboardManager.js
 this.onKeyDown = function (event) {
-    if (event.defaultPrevented || !_this.enabled || !_this.manager) {
-        return;  // SKIPS THE ENTIRE EVENT
-    }
-    // ... process key
+  if (event.defaultPrevented || !_this.enabled || !_this.manager) {
+    return; // SKIPS THE ENTIRE EVENT
+  }
+  // ... process key
 };
 ```
 
@@ -77,6 +77,7 @@ Phaser leaks window keyboard listeners on destroy — only hard reload guarantee
 ## SPACE Key
 
 ### Never duplicate SPACE Key objects:
+
 ```typescript
 // BAD — createCursorKeys already creates .space
 this.cursors = this.input.keyboard!.createCursorKeys();
@@ -88,6 +89,7 @@ this.spaceKey = this.cursors.space!;
 ```
 
 ### Use manual rising-edge instead of JustDown:
+
 ```typescript
 const flapDown = this.spaceKey?.isDown || this.wKey?.isDown;
 const flapJustPressed = flapDown && !this.flapWasDown;
@@ -109,10 +111,10 @@ this.flapWasDown = !!flapDown;
 
 ## Anti-patterns
 
-| Anti-pattern | Problem |
-|---|---|
+| Anti-pattern                                                           | Problem                                                       |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------- |
 | External `window.addEventListener("keydown", e => e.preventDefault())` | Phaser checks `defaultPrevented` and SKIPS the event entirely |
-| `game.events.removeAllListeners()` before destroy | Strips Phaser internals, leaks window keyboard listeners |
-| `JustDown()` for critical inputs | Misses events in edge cases |
-| Duplicate `addKey(SPACE)` + `createCursorKeys()` | Key object conflict |
-| SPA navigation between games (no `reloadDocument`) | Ghost keyboard handlers accumulate |
+| `game.events.removeAllListeners()` before destroy                      | Strips Phaser internals, leaks window keyboard listeners      |
+| `JustDown()` for critical inputs                                       | Misses events in edge cases                                   |
+| Duplicate `addKey(SPACE)` + `createCursorKeys()`                       | Key object conflict                                           |
+| SPA navigation between games (no `reloadDocument`)                     | Ghost keyboard handlers accumulate                            |

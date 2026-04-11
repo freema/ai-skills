@@ -42,10 +42,10 @@ Move, respond to velocity, gravity, and collisions.
 
 ```javascript
 // Create with physics enabled
-const player = this.physics.add.sprite(100, 100, 'player');
+const player = this.physics.add.sprite(100, 100, "player");
 
 // Or add to existing sprite
-const sprite = this.add.sprite(100, 100, 'player');
+const sprite = this.add.sprite(100, 100, "player");
 this.physics.add.existing(sprite);
 
 // Body properties
@@ -56,10 +56,10 @@ player.body.setBounce(0.5, 0.5);
 player.body.setDrag(100, 100);
 player.body.setFriction(0.5, 0.5);
 player.body.setMaxVelocity(300, 400);
-player.body.setGravityY(500);           // Additional gravity
+player.body.setGravityY(500); // Additional gravity
 player.body.setAcceleration(100, 0);
 player.body.setCollideWorldBounds(true);
-player.body.onWorldBounds = true;       // Enable worldbounds event
+player.body.onWorldBounds = true; // Enable worldbounds event
 ```
 
 ### Static Bodies
@@ -69,7 +69,7 @@ Immovable, no velocity or gravity response. Efficient for platforms.
 ```javascript
 // Create static group
 const platforms = this.physics.add.staticGroup();
-platforms.create(400, 568, 'ground');
+platforms.create(400, 568, "ground");
 
 // Or make existing body static
 sprite.body.setImmovable(true);
@@ -84,7 +84,7 @@ sprite.refreshBody();
 ```javascript
 // Custom body size
 sprite.body.setSize(width, height, center);
-sprite.body.setSize(32, 48, true);      // Centered
+sprite.body.setSize(32, 48, true); // Centered
 
 // Offset body from sprite
 sprite.body.setOffset(x, y);
@@ -107,7 +107,7 @@ this.physics.add.collider(player, enemies, hitEnemy, null, this);
 this.physics.add.overlap(player, coins, collectCoin, null, this);
 
 function collectCoin(player, coin) {
-  coin.disableBody(true, true);  // (disableGameObject, hideGameObject)
+  coin.disableBody(true, true); // (disableGameObject, hideGameObject)
 }
 ```
 
@@ -126,7 +126,7 @@ this.physics.add.collider(player, enemies, hitEnemy, shouldCollide, this);
 
 ```javascript
 // World bounds event
-this.physics.world.on('worldbounds', (body, up, down, left, right) => {
+this.physics.world.on("worldbounds", (body, up, down, left, right) => {
   if (down) {
     // Hit bottom of world
   }
@@ -145,11 +145,11 @@ player.body.setCollideWorldBounds(true);
 const platforms = this.physics.add.staticGroup();
 
 // Add children
-platforms.create(400, 568, 'ground');
+platforms.create(400, 568, "ground");
 platforms.createMultiple({
-  key: 'brick',
+  key: "brick",
   repeat: 10,
-  setXY: { x: 50, y: 300, stepX: 70 }
+  setXY: { x: 50, y: 300, stepX: 70 },
 });
 
 // After modifying
@@ -160,22 +160,22 @@ platforms.refresh();
 
 ```javascript
 const enemies = this.physics.add.group({
-  key: 'enemy',
+  key: "enemy",
   repeat: 5,
-  setXY: { x: 100, y: 0, stepX: 100 }
+  setXY: { x: 100, y: 0, stepX: 100 },
 });
 
 // Group defaults
 const bullets = this.physics.add.group({
-  defaultKey: 'bullet',
+  defaultKey: "bullet",
   maxSize: 50,
-  runChildUpdate: true,           // Call update() on children
+  runChildUpdate: true, // Call update() on children
   collideWorldBounds: true,
-  velocityY: -300
+  velocityY: -300,
 });
 
 // Iterate children
-enemies.children.iterate(enemy => {
+enemies.children.iterate((enemy) => {
   enemy.setBounce(0.5);
 });
 
@@ -301,7 +301,14 @@ this.physics.moveTo(sprite, targetX, targetY, speed);
 this.physics.moveToObject(sprite, target, speed);
 
 // Accelerate to point
-this.physics.accelerateTo(sprite, targetX, targetY, accel, maxSpeedX, maxSpeedY);
+this.physics.accelerateTo(
+  sprite,
+  targetX,
+  targetY,
+  accel,
+  maxSpeedX,
+  maxSpeedY
+);
 
 // Velocity from angle
 this.physics.velocityFromAngle(angle, speed, outVelocity);
@@ -335,7 +342,10 @@ const overlapping = this.physics.overlap(player, enemy);
 
 // Distance check
 const distance = Phaser.Math.Distance.Between(
-  player.x, player.y, enemy.x, enemy.y
+  player.x,
+  player.y,
+  enemy.x,
+  enemy.y
 );
 ```
 
@@ -358,15 +368,15 @@ this.cameras.main.startFollow(player);
 ```javascript
 // Toggle debug at runtime
 this.physics.world.drawDebug = true;
-this.physics.world.debugGraphic.clear();  // Clear previous
+this.physics.world.debugGraphic.clear(); // Clear previous
 
 // Custom debug rendering
 const graphics = this.add.graphics();
 
-this.physics.world.on('worldstep', () => {
+this.physics.world.on("worldstep", () => {
   graphics.clear();
 
-  enemies.children.iterate(enemy => {
+  enemies.children.iterate((enemy) => {
     graphics.strokeCircle(
       enemy.body.center.x,
       enemy.body.center.y,
@@ -384,11 +394,12 @@ If your platform collision body needs a **custom size** (via `setSize()`), **NEV
 
 ```javascript
 // StaticBody.updateFromGameObject() source:
-this.width = gameObject.displayWidth;   // OVERWRITES setSize()!
+this.width = gameObject.displayWidth; // OVERWRITES setSize()!
 this.height = gameObject.displayHeight;
 ```
 
 This silently breaks collision when:
+
 - Body should be smaller than visual (e.g. Wang tile corners have transparent areas)
 - Body should be offset from visual center
 - Platforms scroll/move each frame (requiring `updateFromGameObject()` for position sync)
@@ -405,26 +416,26 @@ this.platforms = this.physics.add.group(); // NOT staticGroup!
 const collider = this.add.rectangle(x, y, w, h, 0x000000, 0);
 this.platforms.add(collider);
 const body = collider.body as Phaser.Physics.Arcade.Body;
-body.setImmovable(true);     // won't be pushed by collisions
+body.setImmovable(true); // won't be pushed by collisions
 body.setAllowGravity(false); // won't fall
-body.setSize(bodyW, bodyH);  // custom size — PRESERVED!
+body.setSize(bodyW, bodyH); // custom size — PRESERVED!
 ```
 
 **Why this works**: Dynamic body's `updateBounds()` only recalculates size when **scale changes**. If scale stays 1, `setSize()` is preserved permanently. No manual `updateFromGameObject()` needed — dynamic bodies sync position from game object automatically.
 
 ### When to use which
 
-| Body Type | Use When |
-|-----------|----------|
-| **StaticGroup** | Truly fixed objects (walls, floor tiles), no custom size needed |
-| **Dynamic + immovable** | Moving platforms, scrolling world, custom body sizes |
-| **Dynamic + velocity** | Projectiles, enemies, player |
+| Body Type               | Use When                                                        |
+| ----------------------- | --------------------------------------------------------------- |
+| **StaticGroup**         | Truly fixed objects (walls, floor tiles), no custom size needed |
+| **Dynamic + immovable** | Moving platforms, scrolling world, custom body sizes            |
+| **Dynamic + velocity**  | Projectiles, enemies, player                                    |
 
 ### Endless Runner / Scrolling World Pattern
 
 ```typescript
 // Move game object — body follows automatically
-p.collider.x += dx;   // scroll left
+p.collider.x += dx; // scroll left
 // NO updateFromGameObject() needed!
 
 // Visual tiles follow manually
@@ -434,6 +445,7 @@ for (const v of p.visuals) v.x += dx;
 ### `reset()` vs `updateFromGameObject()` for StaticBody
 
 If you MUST use StaticBody with custom sizes:
+
 - **`reset(x, y)`** — moves position only, **preserves** `setSize()`
 - **`updateFromGameObject()`** — syncs position AND size, **destroys** `setSize()`
 
@@ -447,8 +459,10 @@ If you MUST use StaticBody with custom sizes:
 // In process callback
 function oneWayPlatform(player, platform) {
   // Only collide if player is falling and above platform
-  if (player.body.velocity.y > 0 &&
-      player.body.bottom <= platform.body.top + 10) {
+  if (
+    player.body.velocity.y > 0 &&
+    player.body.bottom <= platform.body.top + 10
+  ) {
     return true;
   }
   return false;
@@ -477,7 +491,7 @@ function hitEnemy(player, enemy) {
 
 ```javascript
 // In create()
-this.movingPlatform = this.physics.add.image(400, 400, 'platform');
+this.movingPlatform = this.physics.add.image(400, 400, "platform");
 this.movingPlatform.body.setImmovable(true);
 this.movingPlatform.body.setAllowGravity(false);
 
@@ -486,14 +500,13 @@ this.tweens.add({
   targets: this.movingPlatform,
   x: 600,
   duration: 2000,
-  ease: 'Sine.easeInOut',
+  ease: "Sine.easeInOut",
   yoyo: true,
-  repeat: -1
+  repeat: -1,
 });
 
 // In update() - move player with platform
-if (player.body.touching.down &&
-    player.body.blocked.down) {
+if (player.body.touching.down && player.body.blocked.down) {
   // Player is on platform
 }
 ```
