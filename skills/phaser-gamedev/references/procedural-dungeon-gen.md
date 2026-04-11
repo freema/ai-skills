@@ -49,7 +49,7 @@ for (let i = 0; i < rooms.length; i++) {
 ```typescript
 // WRONG — overwrites room wall rings:
 grid[y][x] = 0;
-if (grid[y-1][x] !== 0) grid[y-1][x] = wallType; // ← DESTROYS room style
+if (grid[y - 1][x] !== 0) grid[y - 1][x] = wallType; // ← DESTROYS room style
 
 // RIGHT — just carve floor, walls are already there:
 grid[y][x] = 0;
@@ -82,20 +82,24 @@ If you paint ring before carving all rooms, one room's ring overwrites a neighbo
 BSP siblings should be connected with minimal corridor length:
 
 ### Tier 1: Direct Door (gap ≤ 2 cells, rooms overlap on one axis)
+
 - Punch floor through the wall cells between rooms
 - Door scanner finds the gap cell (wall-door-wall satisfied by room walls)
 - Zero corridor length
 
 ### Tier 2: Edge-to-Edge Corridor
+
 - Find nearest edges of both rooms (not centers!)
 - Carve L-shaped path between nearest edge midpoints
 - Much shorter than center-to-center corridors
 
 ### Tier 3: Center-to-Center (avoid)
+
 - Only as last resort — creates unnecessarily long corridors
 - The original BSP tutorials use this but it's suboptimal
 
 ### BSP ROOM_MARGIN affects connection type
+
 - `ROOM_MARGIN = 1` → rooms can nearly touch → more Tier 1 direct connections
 - `ROOM_MARGIN = 2+` → guaranteed gap → more corridors
 
@@ -106,6 +110,7 @@ BSP siblings should be connected with minimal corridor length:
 Doors go at **room entrances only**, never inside corridors or rooms.
 
 A valid door cell must satisfy ALL:
+
 1. Floor tile (0)
 2. NOT in roomGrid (not room interior — sits in corridor/gap)
 3. Walls on two opposite sides: `isWall(N) && isWall(S)` or `isWall(E) && isWall(W)`
@@ -134,6 +139,7 @@ if (isWall(n) && isWall(s) && isFloor(w) && isFloor(e)) {
 ## Validation Checklist
 
 After generation, verify:
+
 1. **Flood fill** from player start reaches ALL floor + door cells
 2. **Wall-door-wall** on every door tile
 3. **Exit door exists** (DOOR_EXIT = 12) — findOrCreateRoomEntrance with 3 fallback strategies

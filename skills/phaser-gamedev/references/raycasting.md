@@ -33,7 +33,7 @@ Phaser doesn't have a built-in raycasting renderer. The approach:
 
 ```typescript
 // config.ts — MUST use Phaser.CANVAS (not AUTO/WEBGL)
-type: Phaser.CANVAS
+type: Phaser.CANVAS;
 
 // create()
 const canvasTex = this.textures.createCanvas("view", RENDER_W, RENDER_H);
@@ -42,8 +42,8 @@ this.view = this.add.image(GW / 2, GH / 2, "view");
 this.view.setDisplaySize(GW, GH);
 
 // update()
-this.renderRaycast();   // draw to ctx
-this.renderHUD();       // draw to ctx
+this.renderRaycast(); // draw to ctx
+this.renderHUD(); // draw to ctx
 (this.textures.get("view") as Phaser.Textures.CanvasTexture).refresh();
 ```
 
@@ -76,31 +76,52 @@ for (let col = 0; col < RENDER_W; col++) {
 
   // Step direction and initial side distances
   let stepX: number, sideDistX: number;
-  if (rayDirX < 0) { stepX = -1; sideDistX = (px - mapX) * deltaDistX; }
-  else             { stepX = 1;  sideDistX = (mapX + 1 - px) * deltaDistX; }
+  if (rayDirX < 0) {
+    stepX = -1;
+    sideDistX = (px - mapX) * deltaDistX;
+  } else {
+    stepX = 1;
+    sideDistX = (mapX + 1 - px) * deltaDistX;
+  }
 
   let stepY: number, sideDistY: number;
-  if (rayDirY < 0) { stepY = -1; sideDistY = (py - mapY) * deltaDistY; }
-  else             { stepY = 1;  sideDistY = (mapY + 1 - py) * deltaDistY; }
+  if (rayDirY < 0) {
+    stepY = -1;
+    sideDistY = (py - mapY) * deltaDistY;
+  } else {
+    stepY = 1;
+    sideDistY = (mapY + 1 - py) * deltaDistY;
+  }
 
-  let hit = 0, side = 0;
+  let hit = 0,
+    side = 0;
   while (hit === 0) {
     // Step to next cell boundary
     if (sideDistX < sideDistY) {
-      sideDistX += deltaDistX; mapX += stepX; side = 0;
+      sideDistX += deltaDistX;
+      mapX += stepX;
+      side = 0;
     } else {
-      sideDistY += deltaDistY; mapY += stepY; side = 1;
+      sideDistY += deltaDistY;
+      mapY += stepY;
+      side = 1;
     }
-    if (outOfBounds(mapX, mapY)) { hit = 1; break; }
+    if (outOfBounds(mapX, mapY)) {
+      hit = 1;
+      break;
+    }
 
     const tile = MAP[mapY][mapX];
-    if (tile > 0) { hit = tile; break; }
+    if (tile > 0) {
+      hit = tile;
+      break;
+    }
   }
 
   // PERPENDICULAR distance (not Euclidean — avoids fisheye!)
   let perpDist: number;
   if (side === 0) perpDist = (mapX - px + (1 - stepX) / 2) / rayDirX;
-  else            perpDist = (mapY - py + (1 - stepY) / 2) / rayDirY;
+  else perpDist = (mapY - py + (1 - stepY) / 2) / rayDirY;
 
   const lineHeight = Math.floor(RENDER_H / perpDist);
   const drawStart = Math.max(0, Math.floor((RENDER_H - lineHeight) / 2));
@@ -165,7 +186,7 @@ if (isDoorTile(tile)) {
   // Center plane distance = half a cell further than the boundary hit
   let centerDist: number;
   if (side === 0) centerDist = sideDistX - deltaDistX * 0.5;
-  else            centerDist = sideDistY - deltaDistY * 0.5;
+  else centerDist = sideDistY - deltaDistY * 0.5;
 
   // Check: does the ray exit the cell before reaching the center?
   if (side === 0 && sideDistY < centerDist) continue; // missed
@@ -174,7 +195,7 @@ if (isDoorTile(tile)) {
   // Where along the door surface (0 to 1)
   let doorX: number;
   if (side === 0) doorX = py + centerDist * rayDirY;
-  else            doorX = px + centerDist * rayDirX;
+  else doorX = px + centerDist * rayDirX;
   doorX -= Math.floor(doorX);
 
   // ... check door type for open/closed logic ...
@@ -197,7 +218,7 @@ Door slides sideways into the adjacent wall. Check if `doorX < openAmount` — i
 
 ```typescript
 if (doorX < door.openAmount) continue; // ray passes through gap
-doorTexX = doorX - door.openAmount;    // texture slides with door
+doorTexX = doorX - door.openAmount; // texture slides with door
 ```
 
 ### DOOR_SPLIT — Star Trek two-halves
@@ -225,6 +246,7 @@ A portcullis/iron gate where you can see the corridor behind it through the bars
 ### The problem
 
 Normal raycasting stops at the first hit. For transparent doors, we need to:
+
 1. Record the gate hit
 2. Continue the ray to find what's BEHIND the gate
 3. Render the background wall first
@@ -395,7 +417,7 @@ The HUD is drawn directly into the same CanvasTexture, below the 3D viewport.
 
 ```typescript
 const RENDER_H = 200; // 3D viewport
-const HUD_H = 40;     // HUD bar
+const HUD_H = 40; // HUD bar
 const FULL_H = RENDER_H + HUD_H; // total canvas height
 
 // Create canvas at full height
@@ -502,11 +524,13 @@ for (let col = 0; col < RENDER_W; col++) {
 When a wall column is taller than the viewport, `drawStart` and `drawEnd` are clamped. If `drawImage` maps the FULL source texture to the clamped destination, the texture **squishes** instead of clipping properly.
 
 **WRONG** — squishes texture into visible area:
+
 ```typescript
 ctx.drawImage(img, texX, 0, 1, texH, col, drawStart, 1, sliceH);
 ```
 
 **CORRECT** — compute source rect from the visible portion:
+
 ```typescript
 const wallTop = Math.floor((RENDER_H - lineHeight) / 2);
 const texYStart = ((drawStart - wallTop) / lineHeight) * texH;
@@ -529,6 +553,7 @@ frameIdx = Math.floor(e.animTimer / frameTime) % frames.length;
 ```
 
 Reset `animTimer = 0` at EVERY state transition. Walk animation bob adds visual movement cue:
+
 ```typescript
 if (e.state === "chase") {
   const bobAmplitude = Math.max(1, Math.floor(spriteH * 0.04));
@@ -543,11 +568,13 @@ After enemy movement update, push enemies out of solid props and away from each 
 ```typescript
 // Enemy–prop (full push on enemy)
 const push = (minDist - dist) / dist;
-e.x += dx * push; e.y += dy * push;
+e.x += dx * push;
+e.y += dy * push;
 
 // Enemy–enemy (half push on each)
-const push = (minDist - dist) / dist * 0.5;
-e.x += dx * push; other.x -= dx * push;
+const push = ((minDist - dist) / dist) * 0.5;
+e.x += dx * push;
+other.x -= dx * push;
 ```
 
 ---
@@ -645,6 +672,7 @@ if (isPassable(...) && !this.collidesWithEnemy(this.px, ny)) this.py = ny;
 ### Secret push-walls (rising into ceiling)
 
 Secret walls use the same overlay technique as transparent gates. When opening:
+
 1. Ray passes through the cell (record hit for overlay)
 2. Background wall behind renders normally
 3. Secret wall renders as overlay with vertical offset: `yOffset = openAmount * lineHeight`
@@ -663,11 +691,13 @@ Each wall decal is defined by which cell face it's on, plus a horizontal offset 
 
 ```typescript
 interface WallTorch {
-  r: number; c: number;              // map cell
-  face: "N" | "S" | "E" | "W";      // which face of the cell
-  offset: number;                    // 0–1 horizontal position on face (0.5 = centered)
-  flickerPhase: number;              // animation state
-  worldX: number; worldY: number;    // derived world position (for lighting)
+  r: number;
+  c: number; // map cell
+  face: "N" | "S" | "E" | "W"; // which face of the cell
+  offset: number; // 0–1 horizontal position on face (0.5 = centered)
+  flickerPhase: number; // animation state
+  worldX: number;
+  worldY: number; // derived world position (for lighting)
 }
 ```
 
@@ -707,9 +737,10 @@ side=1, stepY=-1 → ray going up    → hit SOUTH face
 Compute where along the face (0–1) the ray hit:
 
 ```typescript
-const frac = side === 0
-  ? hitWorldY - Math.floor(hitWorldY)   // vertical boundary → use Y fraction
-  : hitWorldX - Math.floor(hitWorldX);  // horizontal boundary → use X fraction
+const frac =
+  side === 0
+    ? hitWorldY - Math.floor(hitWorldY) // vertical boundary → use Y fraction
+    : hitWorldX - Math.floor(hitWorldX); // horizontal boundary → use X fraction
 ```
 
 ### Rendering inline with raycasting
@@ -719,21 +750,26 @@ After rendering the wall column, check if a decal exists on this face. If the hi
 ```typescript
 // Inside the per-column loop, AFTER drawing the wall:
 if (!isDoorHit && hit > 0) {
-  const face = side === 0
-    ? (stepX === 1 ? "W" : "E")
-    : (stepY === 1 ? "N" : "S");
+  const face = side === 0 ? (stepX === 1 ? "W" : "E") : stepY === 1 ? "N" : "S";
 
   const torch = this.torchLookup.get(`${mapY},${mapX},${face}`);
   if (torch) {
-    const frac = side === 0
-      ? hitWY - Math.floor(hitWY)
-      : hitWX - Math.floor(hitWX);
+    const frac =
+      side === 0 ? hitWY - Math.floor(hitWY) : hitWX - Math.floor(hitWX);
 
     const halfW = TORCH_WIDTH / 2; // e.g. 0.09
     if (frac >= torch.offset - halfW && frac <= torch.offset + halfW) {
       // nx = normalized X within the decal (0–1)
       const nx = (frac - (torch.offset - halfW)) / TORCH_WIDTH;
-      this.renderWallTorchSlice(ctx, col, drawStart, sliceH, nx, fogFactor, torch);
+      this.renderWallTorchSlice(
+        ctx,
+        col,
+        drawStart,
+        sliceH,
+        nx,
+        fogFactor,
+        torch
+      );
     }
   }
 }
@@ -824,10 +860,22 @@ Each torch needs a world-space coordinate (offset slightly from the wall surface
 ```typescript
 // Offset 0.15 units outward from the wall face
 switch (face) {
-  case "N": worldX = c + offset; worldY = r + 0.15; break;    // top face → offset down
-  case "S": worldX = c + offset; worldY = r + 1 - 0.15; break; // bottom → offset up
-  case "E": worldX = c + 1 - 0.15; worldY = r + offset; break; // right → offset left
-  case "W": worldX = c + 0.15; worldY = r + offset; break;     // left → offset right
+  case "N":
+    worldX = c + offset;
+    worldY = r + 0.15;
+    break; // top face → offset down
+  case "S":
+    worldX = c + offset;
+    worldY = r + 1 - 0.15;
+    break; // bottom → offset up
+  case "E":
+    worldX = c + 1 - 0.15;
+    worldY = r + offset;
+    break; // right → offset left
+  case "W":
+    worldX = c + 0.15;
+    worldY = r + offset;
+    break; // left → offset right
 }
 ```
 
