@@ -10,21 +10,21 @@ Creates 16 Wang tiles (4×4 grid, 128×128px spritesheet) optimized for side-vie
 
 ### Key Parameters
 
-| Parameter | Default | Range | Purpose |
-|---|---|---|---|
-| `lower_description` | required | string | Platform material ("stone brick", "wooden planks", etc.) |
-| `transition_description` | required | string | Surface decoration ("moss", "grass", "snow", "cracked edge") |
-| `transition_size` | 0.0 | 0.0–0.5 | How much surface layer appears. 0=none, 0.25=light, 0.5=heavy |
-| `tile_size` | {w:16,h:16} | 16 or 32 | Tile dimensions. **Use 32×32 for our games** |
-| `outline` | null | lineless/selective/single color | **Always use "lineless"** (project preference) |
-| `shading` | null | flat/basic/medium/detailed/highly detailed | "medium shading" recommended |
-| `detail` | null | low/medium/highly detailed | "medium detail" recommended |
-| `base_tile_id` | null | UUID | Reference tile from previous tileset for visual consistency |
-| `tileset_adherence` | 100 | 0–500 | Structure strictness to reference. Higher = closer match |
-| `tileset_adherence_freedom` | 500 | 0–900 | How much AI can deviate. Lower = more rigid |
-| `tile_strength` | 1.0 | 0.1–2.0 | Pattern consistency within tileset |
-| `text_guidance_scale` | 8 | 1–20 | How strongly text description influences output |
-| `seed` | null | integer | Reproducible generation (single tileset only, not cross-tileset) |
+| Parameter                   | Default     | Range                                      | Purpose                                                          |
+| --------------------------- | ----------- | ------------------------------------------ | ---------------------------------------------------------------- |
+| `lower_description`         | required    | string                                     | Platform material ("stone brick", "wooden planks", etc.)         |
+| `transition_description`    | required    | string                                     | Surface decoration ("moss", "grass", "snow", "cracked edge")     |
+| `transition_size`           | 0.0         | 0.0–0.5                                    | How much surface layer appears. 0=none, 0.25=light, 0.5=heavy    |
+| `tile_size`                 | {w:16,h:16} | 16 or 32                                   | Tile dimensions. **Use 32×32 for our games**                     |
+| `outline`                   | null        | lineless/selective/single color            | **Always use "lineless"** (project preference)                   |
+| `shading`                   | null        | flat/basic/medium/detailed/highly detailed | "medium shading" recommended                                     |
+| `detail`                    | null        | low/medium/highly detailed                 | "medium detail" recommended                                      |
+| `base_tile_id`              | null        | UUID                                       | Reference tile from previous tileset for visual consistency      |
+| `tileset_adherence`         | 100         | 0–500                                      | Structure strictness to reference. Higher = closer match         |
+| `tileset_adherence_freedom` | 500         | 0–900                                      | How much AI can deviate. Lower = more rigid                      |
+| `tile_strength`             | 1.0         | 0.1–2.0                                    | Pattern consistency within tileset                               |
+| `text_guidance_scale`       | 8           | 1–20                                       | How strongly text description influences output                  |
+| `seed`                      | null        | integer                                    | Reproducible generation (single tileset only, not cross-tileset) |
 
 ### Output
 
@@ -49,19 +49,21 @@ Only mechanism for cross-tileset visual consistency. Workflow:
 
 Tested combinations (from our experiments):
 
-| Setting | adherence | freedom | Result |
-|---|---|---|---|
-| Default | 100 | 500 | Very loose — tilesets look quite different |
-| Medium | 300 | 200 | Closer match, still noticeable differences |
-| Tight | 400 | 100 | Very close to original, minimal variation |
+| Setting | adherence | freedom | Result                                     |
+| ------- | --------- | ------- | ------------------------------------------ |
+| Default | 100       | 500     | Very loose — tilesets look quite different |
+| Medium  | 300       | 200     | Closer match, still noticeable differences |
+| Tight   | 400       | 100     | Very close to original, minimal variation  |
 
 **For complementary tilesets** (same material, different surface):
+
 - Use `base_tile_id` from first tileset
 - Keep `lower_description` identical
 - Change only `transition_description`
 - Use adherence 300–400 / freedom 100–200
 
 **For contrasting tilesets** (different look, same game):
+
 - Use `base_tile_id` for some consistency
 - Different `lower_description` + `transition_description`
 - Use adherence 100–200 / freedom 300–500
@@ -84,6 +86,7 @@ Each tile has 4 corners: NW, NE, SW, SE.
 ### IMPORTANT: Terrain encoding
 
 From PixelLab docs:
+
 ```json
 "lower": "rock"                    // = SOLID platform material
 "upper": "transparent background"  // = AIR / transparent
@@ -99,27 +102,29 @@ Spritesheet is 4×4 grid. Frame = `(bounding_box.y / tileSize) * 4 + (bounding_b
 
 ### Verified Platformer Role Mapping (tested in Relic Rush)
 
-| Platformer Role | Wang Tile | Frame | Corners (NW,NE,SW,SE) | Visual |
-|-----------------|-----------|-------|------------------------|--------|
-| **TOP_LEFT** | wang_14 | 13 | up,up,up,low | Only SE solid → outer top-left corner |
-| **TOP** | wang_12 | 3 | up,up,low,low | Air above, solid below → top surface |
-| **TOP_RIGHT** | wang_13 | 0 | up,up,low,up | Only SW solid → outer top-right corner |
-| **LEFT** | wang_10 | 1 | up,low,up,low | Air left, solid right → left edge |
-| **CENTER** | wang_0 | 6 | low,low,low,low | All solid → interior fill |
-| **RIGHT** | wang_5 | 11 | low,up,low,up | Solid left, air right → right edge |
-| **BOTTOM_LEFT** | wang_11 | 8 | up,low,up,up | Only NE solid → outer bottom-left |
-| **BOTTOM** | wang_3 | 9 | low,low,up,up | Solid above, air below → bottom edge |
-| **BOTTOM_RIGHT** | wang_7 | 15 | low,up,up,up | Only NW solid → outer bottom-right |
+| Platformer Role  | Wang Tile | Frame | Corners (NW,NE,SW,SE) | Visual                                 |
+| ---------------- | --------- | ----- | --------------------- | -------------------------------------- |
+| **TOP_LEFT**     | wang_14   | 13    | up,up,up,low          | Only SE solid → outer top-left corner  |
+| **TOP**          | wang_12   | 3     | up,up,low,low         | Air above, solid below → top surface   |
+| **TOP_RIGHT**    | wang_13   | 0     | up,up,low,up          | Only SW solid → outer top-right corner |
+| **LEFT**         | wang_10   | 1     | up,low,up,low         | Air left, solid right → left edge      |
+| **CENTER**       | wang_0    | 6     | low,low,low,low       | All solid → interior fill              |
+| **RIGHT**        | wang_5    | 11    | low,up,low,up         | Solid left, air right → right edge     |
+| **BOTTOM_LEFT**  | wang_11   | 8     | up,low,up,up          | Only NE solid → outer bottom-left      |
+| **BOTTOM**       | wang_3    | 9     | low,low,up,up         | Solid above, air below → bottom edge   |
+| **BOTTOM_RIGHT** | wang_7    | 15    | low,up,up,up          | Only NW solid → outer bottom-right     |
 
 ### 2-Row Platform Rendering (recommended for visual depth)
 
 For a platform W tiles wide, render 2 rows:
+
 - **Row 0** (top surface, where player walks): TOP_LEFT → TOP (repeat) → TOP_RIGHT
 - **Row 1** (body extending down): BOTTOM_LEFT → BOTTOM (repeat) → BOTTOM_RIGHT
 
 Physics body covers only row 0 (the collision surface). Row 1 is purely visual.
 
 Special cases:
+
 - **1 tile wide**: Row 0 = TOP, Row 1 = BOTTOM
 - **2 tiles wide**: Row 0 = TOP_LEFT + TOP_RIGHT, Row 1 = BOTTOM_LEFT + BOTTOM_RIGHT
 
@@ -132,7 +137,8 @@ Special cases:
 ```typescript
 // boot.ts — load as spritesheet (4×4 grid)
 this.load.spritesheet("tileset-stone", `${ASSET_BASE}/tileset-stone.png`, {
-  frameWidth: 32, frameHeight: 32
+  frameWidth: 32,
+  frameHeight: 32,
 });
 ```
 
@@ -188,27 +194,30 @@ private spawnPlatform(x: number, y: number, widthTiles: number) {
 ```typescript
 // Tileset 1: Main platform (dark temple stone + light moss)
 create_sidescroller_tileset({
-  lower_description: "ancient greek temple stone blocks, dark brown weathered marble bricks",
+  lower_description:
+    "ancient greek temple stone blocks, dark brown weathered marble bricks",
   transition_description: "cracked stone edge with small moss patches",
   transition_size: 0.25,
   tile_size: { width: 32, height: 32 },
   outline: "lineless",
   detail: "medium detail",
-  shading: "medium shading"
-})
+  shading: "medium shading",
+});
 // → base_tile_id: "c5ae1d1b-..."
 
 // Tileset 2: Overgrown variant (same stone + heavy green moss)
 create_sidescroller_tileset({
-  lower_description: "ancient greek temple stone blocks, dark brown weathered marble bricks",
-  transition_description: "thick green moss and small ferns growing on cracked stone surface",
+  lower_description:
+    "ancient greek temple stone blocks, dark brown weathered marble bricks",
+  transition_description:
+    "thick green moss and small ferns growing on cracked stone surface",
   transition_size: 0.5,
   tile_size: { width: 32, height: 32 },
   outline: "lineless",
   detail: "medium detail",
   shading: "medium shading",
-  base_tile_id: "c5ae1d1b-..."
-})
+  base_tile_id: "c5ae1d1b-...",
+});
 ```
 
 ---

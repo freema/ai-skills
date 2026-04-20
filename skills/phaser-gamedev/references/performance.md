@@ -9,6 +9,7 @@ The most impactful optimization for games with many spawning/despawning objects.
 ### Why Pool?
 
 Creating/destroying objects causes:
+
 - Memory allocation overhead
 - Garbage collection pauses (stutters)
 - Texture rebinding costs
@@ -20,16 +21,16 @@ class BulletPool {
   constructor(scene) {
     this.scene = scene;
     this.pool = scene.physics.add.group({
-      defaultKey: 'bullet',
+      defaultKey: "bullet",
       maxSize: 100,
-      runChildUpdate: true
+      runChildUpdate: true,
     });
   }
 
   spawn(x, y, velocityX, velocityY) {
     const bullet = this.pool.get(x, y);
 
-    if (!bullet) return null;  // Pool exhausted
+    if (!bullet) return null; // Pool exhausted
 
     bullet.setActive(true);
     bullet.setVisible(true);
@@ -66,11 +67,11 @@ const enemies = this.physics.add.group({
   maxSize: 50,
   classType: Enemy,
   createCallback: (enemy) => {
-    enemy.setName('enemy' + enemies.getLength());
+    enemy.setName("enemy" + enemies.getLength());
   },
   removeCallback: (enemy) => {
-    enemy.setName('');
-  }
+    enemy.setName("");
+  },
 });
 
 // Get inactive member (or create if under maxSize)
@@ -97,22 +98,22 @@ Export as Phaser 3 JSON Hash format.
 
 ```javascript
 // Load atlas
-this.load.atlas('sprites', 'atlas/sprites.png', 'atlas/sprites.json');
+this.load.atlas("sprites", "atlas/sprites.png", "atlas/sprites.json");
 
 // Use frames
-this.add.sprite(x, y, 'sprites', 'player-idle-1');
+this.add.sprite(x, y, "sprites", "player-idle-1");
 
 // Animation from atlas
 this.anims.create({
-  key: 'walk',
-  frames: this.anims.generateFrameNames('sprites', {
-    prefix: 'player-walk-',
+  key: "walk",
+  frames: this.anims.generateFrameNames("sprites", {
+    prefix: "player-walk-",
     start: 1,
     end: 8,
-    zeroPad: 2
+    zeroPad: 2,
   }),
   frameRate: 10,
-  repeat: -1
+  repeat: -1,
 });
 ```
 
@@ -123,13 +124,15 @@ Only render what's visible.
 ### Automatic Culling
 
 Phaser culls off-camera objects by default for:
+
 - Sprites
 - Images
 - TileSprites
 
 Disable if needed:
+
 ```javascript
-sprite.setScrollFactor(0);  // Fixed to camera (no culling)
+sprite.setScrollFactor(0); // Fixed to camera (no culling)
 ```
 
 ### Manual Culling for Custom Objects
@@ -203,7 +206,7 @@ physics: {
 sprite.body.setCircle(16);
 
 // Reduce body size for tighter collisions
-sprite.body.setSize(24, 32);  // Smaller than sprite
+sprite.body.setSize(24, 32); // Smaller than sprite
 ```
 
 ## Rendering Optimization
@@ -215,9 +218,9 @@ Group sprites using same texture for batching:
 ```javascript
 // Good: All use same atlas
 const coins = this.add.group({
-  key: 'atlas',
-  frame: 'coin',
-  repeat: 100
+  key: "atlas",
+  frame: "coin",
+  repeat: 100,
 });
 
 // Bad: Mixed textures break batching
@@ -237,7 +240,7 @@ sprite.setBlendMode(Phaser.BlendModes.NORMAL);
 
 ```javascript
 // TileSprite for repeating backgrounds (efficient)
-this.add.tileSprite(0, 0, 800, 600, 'background').setOrigin(0);
+this.add.tileSprite(0, 0, 800, 600, "background").setOrigin(0);
 
 // Don't animate large backgrounds in update()
 ```
@@ -245,12 +248,12 @@ this.add.tileSprite(0, 0, 800, 600, 'background').setOrigin(0);
 ### Limit Particle Count
 
 ```javascript
-const emitter = this.add.particles(x, y, 'particle', {
+const emitter = this.add.particles(x, y, "particle", {
   speed: 100,
   lifespan: 500,
-  quantity: 2,       // Particles per emit
+  quantity: 2, // Particles per emit
   maxParticles: 100, // Hard limit
-  frequency: 50      // ms between emits
+  frequency: 50, // ms between emits
 });
 ```
 
@@ -386,13 +389,13 @@ update() {
 
 ### Common Bottlenecks
 
-| Symptom | Likely Cause | Solution |
-|---------|--------------|----------|
-| Gradual slowdown | Memory leak | Check destroy() calls |
-| Periodic stutters | GC pauses | Object pooling |
-| Low FPS always | Too many objects | Culling, pooling |
-| Spikes on spawn | Object creation | Pre-pool objects |
-| Slow collisions | Too many checks | Spatial partitioning |
+| Symptom           | Likely Cause     | Solution              |
+| ----------------- | ---------------- | --------------------- |
+| Gradual slowdown  | Memory leak      | Check destroy() calls |
+| Periodic stutters | GC pauses        | Object pooling        |
+| Low FPS always    | Too many objects | Culling, pooling      |
+| Spikes on spawn   | Object creation  | Pre-pool objects      |
+| Slow collisions   | Too many checks  | Spatial partitioning  |
 
 ## Quick Wins Checklist
 
