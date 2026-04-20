@@ -21,10 +21,10 @@ Practical Phaser 3 snippets and patterns that are helpful to copy/adapt during i
 
 ```javascript
 const config = {
-  type: Phaser.AUTO,           // WebGL with Canvas fallback
+  type: Phaser.AUTO, // WebGL with Canvas fallback
   width: 800,
   height: 600,
-  scene: [BootScene, GameScene]
+  scene: [BootScene, GameScene],
 };
 
 const game = new Phaser.Game(config);
@@ -37,33 +37,33 @@ const config = {
   type: Phaser.AUTO,
   width: 800,
   height: 600,
-  parent: 'game-container',    // DOM element ID
-  backgroundColor: '#2d2d2d',
+  parent: "game-container", // DOM element ID
+  backgroundColor: "#2d2d2d",
 
   scale: {
     mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    autoCenter: Phaser.Scale.CENTER_BOTH,
   },
 
   physics: {
-    default: 'arcade',
+    default: "arcade",
     arcade: {
       gravity: { y: 300 },
-      debug: false              // Enable during development
-    }
+      debug: false, // Enable during development
+    },
   },
 
-  scene: [BootScene, MenuScene, GameScene, GameOverScene]
+  scene: [BootScene, MenuScene, GameScene, GameOverScene],
 };
 ```
 
 ### Physics system choice
 
-| System | Use when |
-|---|---|
-| Arcade | Platformers, shooters, most 2D games; fast AABB collisions |
+| System | Use when                                                                  |
+| ------ | ------------------------------------------------------------------------- |
+| Arcade | Platformers, shooters, most 2D games; fast AABB collisions                |
 | Matter | Physics puzzles, ragdolls, realistic collisions; slower but more accurate |
-| None | Menu scenes, visual novels, card games |
+| None   | Menu scenes, visual novels, card games                                    |
 
 ---
 
@@ -74,7 +74,7 @@ const config = {
 ```javascript
 class GameScene extends Phaser.Scene {
   constructor() {
-    super('GameScene');        // Scene key for reference
+    super("GameScene"); // Scene key for reference
   }
 
   init(data) {
@@ -84,15 +84,16 @@ class GameScene extends Phaser.Scene {
 
   preload() {
     // Load assets before create()
-    this.load.image('player', 'assets/player.png');
-    this.load.spritesheet('enemy', 'assets/enemy.png', {
-      frameWidth: 32, frameHeight: 32
+    this.load.image("player", "assets/player.png");
+    this.load.spritesheet("enemy", "assets/enemy.png", {
+      frameWidth: 32,
+      frameHeight: 32,
     });
   }
 
   create() {
     // Set up objects, physics, input
-    this.player = this.physics.add.sprite(100, 100, 'player');
+    this.player = this.physics.add.sprite(100, 100, "player");
     this.cursors = this.input.keyboard.createCursorKeys();
   }
 
@@ -107,17 +108,17 @@ class GameScene extends Phaser.Scene {
 
 ```javascript
 // Start a new scene (stops current)
-this.scene.start('GameOverScene', { score: this.score });
+this.scene.start("GameOverScene", { score: this.score });
 
 // Launch scene in parallel (both run)
-this.scene.launch('UIScene');
+this.scene.launch("UIScene");
 
 // Pause/resume scenes
-this.scene.pause('GameScene');
-this.scene.resume('GameScene');
+this.scene.pause("GameScene");
+this.scene.resume("GameScene");
 
 // Stop a scene
-this.scene.stop('UIScene');
+this.scene.stop("UIScene");
 ```
 
 ### Recommended scene structure
@@ -140,15 +141,15 @@ scenes/
 
 ```javascript
 // Images (static)
-this.add.image(400, 300, 'background');
+this.add.image(400, 300, "background");
 
 // Sprites (can animate)
-const player = this.add.sprite(100, 100, 'player');
+const player = this.add.sprite(100, 100, "player");
 
 // Text
-const score = this.add.text(16, 16, 'Score: 0', {
-  fontSize: '32px',
-  fill: '#fff'
+const score = this.add.text(16, 16, "Score: 0", {
+  fontSize: "32px",
+  fill: "#fff",
 });
 
 // Graphics (draw shapes)
@@ -160,23 +161,23 @@ graphics.fillRect(100, 100, 50, 50);
 const container = this.add.container(400, 300, [sprite1, sprite2]);
 
 // Tilemaps
-const map = this.make.tilemap({ key: 'level1' });
+const map = this.make.tilemap({ key: "level1" });
 ```
 
 ### Sprite creation patterns
 
 ```javascript
 // Basic sprite
-const sprite = this.add.sprite(x, y, 'textureKey');
+const sprite = this.add.sprite(x, y, "textureKey");
 
 // Sprite with physics body
-const bodySprite = this.physics.add.sprite(x, y, 'textureKey');
+const bodySprite = this.physics.add.sprite(x, y, "textureKey");
 
 // From spritesheet frame
-const framed = this.add.sprite(x, y, 'sheet', frameIndex);
+const framed = this.add.sprite(x, y, "sheet", frameIndex);
 
 // From atlas
-const atlasSprite = this.add.sprite(x, y, 'atlas', 'frameName');
+const atlasSprite = this.add.sprite(x, y, "atlas", "frameName");
 ```
 
 ---
@@ -187,7 +188,7 @@ const atlasSprite = this.add.sprite(x, y, 'atlas', 'frameName');
 
 ```javascript
 // Enable physics on sprite
-this.physics.add.sprite(x, y, 'player');
+this.physics.add.sprite(x, y, "player");
 
 // Or add physics to existing sprite
 this.physics.add.existing(sprite);
@@ -213,16 +214,16 @@ function collectCoin(player, coin) {
 ```javascript
 // Static group (platforms, walls)
 const platforms = this.physics.add.staticGroup();
-platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+platforms.create(400, 568, "ground").setScale(2).refreshBody();
 
 // Dynamic group (enemies, bullets)
 const enemies = this.physics.add.group({
-  key: 'enemy',
+  key: "enemy",
   repeat: 5,
-  setXY: { x: 100, y: 0, stepX: 70 }
+  setXY: { x: 100, y: 0, stepX: 70 },
 });
 
-enemies.children.iterate(enemy => {
+enemies.children.iterate((enemy) => {
   enemy.setBounce(Phaser.Math.FloatBetween(0.4, 0.8));
 });
 ```
@@ -267,14 +268,16 @@ if (this.cursors.left.isDown) {
 }
 
 if (this.cursors.up.isDown && player.body.touching.down) {
-  player.setVelocityY(-330);  // Jump
+  player.setVelocityY(-330); // Jump
 }
 
 // Custom keys
-this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+this.spaceKey = this.input.keyboard.addKey(
+  Phaser.Input.Keyboard.KeyCodes.SPACE
+);
 
 // Key events
-this.input.keyboard.on('keydown-SPACE', () => {
+this.input.keyboard.on("keydown-SPACE", () => {
   this.fire();
 });
 ```
@@ -283,18 +286,18 @@ this.input.keyboard.on('keydown-SPACE', () => {
 
 ```javascript
 // Click/tap
-this.input.on('pointerdown', (pointer) => {
+this.input.on("pointerdown", (pointer) => {
   console.log(pointer.x, pointer.y);
 });
 
 // Make object interactive
 sprite.setInteractive();
-sprite.on('pointerdown', () => sprite.setTint(0xff0000));
-sprite.on('pointerup', () => sprite.clearTint());
+sprite.on("pointerdown", () => sprite.setTint(0xff0000));
+sprite.on("pointerup", () => sprite.clearTint());
 
 // Drag
 this.input.setDraggable(sprite);
-this.input.on('drag', (pointer, obj, dragX, dragY) => {
+this.input.on("drag", (pointer, obj, dragX, dragY) => {
   obj.x = dragX;
   obj.y = dragY;
 });
@@ -308,41 +311,41 @@ this.input.on('drag', (pointer, obj, dragX, dragY) => {
 
 ```javascript
 this.anims.create({
-  key: 'walk',
-  frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+  key: "walk",
+  frames: this.anims.generateFrameNumbers("player", { start: 0, end: 3 }),
   frameRate: 10,
-  repeat: -1
+  repeat: -1,
 });
 
 this.anims.create({
-  key: 'jump',
-  frames: [{ key: 'player', frame: 4 }],
-  frameRate: 20
+  key: "jump",
+  frames: [{ key: "player", frame: 4 }],
+  frameRate: 20,
 });
 
 // From atlas
 this.anims.create({
-  key: 'explode',
-  frames: this.anims.generateFrameNames('atlas', {
-    prefix: 'explosion_',
+  key: "explode",
+  frames: this.anims.generateFrameNames("atlas", {
+    prefix: "explosion_",
     start: 1,
     end: 8,
-    zeroPad: 2
+    zeroPad: 2,
   }),
   frameRate: 16,
-  hideOnComplete: true
+  hideOnComplete: true,
 });
 ```
 
 ### Playing animations
 
 ```javascript
-sprite.anims.play('walk', true);  // ignore if already playing
-sprite.anims.play('jump');
+sprite.anims.play("walk", true); // ignore if already playing
+sprite.anims.play("jump");
 sprite.anims.stop();
 
-sprite.on('animationcomplete', (anim) => {
-  if (anim.key === 'die') sprite.destroy();
+sprite.on("animationcomplete", (anim) => {
+  if (anim.key === "die") sprite.destroy();
 });
 ```
 
@@ -384,7 +387,7 @@ preload() {
 ```javascript
 class BootScene extends Phaser.Scene {
   constructor() {
-    super('BootScene');
+    super("BootScene");
   }
 
   preload() {
@@ -394,20 +397,20 @@ class BootScene extends Phaser.Scene {
     const progressBar = this.add.graphics();
     const progressBox = this.add.graphics();
     progressBox.fillStyle(0x222222, 0.8);
-    progressBox.fillRect(width/2 - 160, height/2 - 25, 320, 50);
+    progressBox.fillRect(width / 2 - 160, height / 2 - 25, 320, 50);
 
-    this.load.on('progress', (value) => {
+    this.load.on("progress", (value) => {
       progressBar.clear();
       progressBar.fillStyle(0xffffff, 1);
-      progressBar.fillRect(width/2 - 150, height/2 - 15, 300 * value, 30);
+      progressBar.fillRect(width / 2 - 150, height / 2 - 15, 300 * value, 30);
     });
 
     // Load all game assets here
-    this.load.image('player', 'assets/player.png');
+    this.load.image("player", "assets/player.png");
   }
 
   create() {
-    this.scene.start('MenuScene');
+    this.scene.start("MenuScene");
   }
 }
 ```
@@ -438,16 +441,15 @@ game/
 ### ES module setup
 
 ```javascript
-import Phaser from 'phaser';
-import BootScene from './scenes/BootScene';
-import GameScene from './scenes/GameScene';
-import { gameConfig } from './config/gameConfig';
+import Phaser from "phaser";
+import BootScene from "./scenes/BootScene";
+import GameScene from "./scenes/GameScene";
+import { gameConfig } from "./config/gameConfig";
 
 const config = {
   ...gameConfig,
-  scene: [BootScene, GameScene]
+  scene: [BootScene, GameScene],
 };
 
 new Phaser.Game(config);
 ```
-
