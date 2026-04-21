@@ -1,3 +1,8 @@
+---
+name: pixellab
+description: "Generate pixel-art tilesets and sprites via PixelLab MCP. Use when creating sidescroller platform tiles, top-down Wang tilesets, or other pixel-art assets through the PixelLab MCP server."
+---
+
 # PixelLab MCP Skills
 
 ## Reference Files

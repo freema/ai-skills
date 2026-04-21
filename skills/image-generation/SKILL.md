@@ -1,3 +1,8 @@
+---
+name: image-generation
+description: "Generate game assets via Google Gemini API and process them into final sprite files. Use when creating new game sprites, generating concept art, or running the asset pipeline (Gemini image generation, sprite sheets, Imagen)."
+---
+
 # Image Generation & Asset Pipeline
 
 Generuj game assety přes Google Gemini API a zpracuj je do finálních sprite souborů.
