@@ -1,3 +1,8 @@
+---
+name: image-generation
+description: "Generate game assets via Google Gemini API and process them into final sprite files. Use when creating new game sprites, generating concept art, or running the asset pipeline (Gemini image generation, sprite sheets, Imagen)."
+---
+
 # Image Generation & Asset Pipeline
 
 Generuj game assety přes Google Gemini API a zpracuj je do finálních sprite souborů.
@@ -11,11 +16,11 @@ GEMINI_API_KEY=$(grep GEMINI_API_KEY .env | cut -d= -f2) \
 
 ## Modely
 
-| Model | Poznámka |
-|-------|---------|
-| `gemini-3-pro-image-preview` | **Default** — nejlepší kvalita |
-| `gemini-3.1-flash-image-preview` | Rychlejší |
-| `imagen-4.0-generate-001` | Imagen 4, podporuje `--negative` |
+| Model                            | Poznámka                         |
+| -------------------------------- | -------------------------------- |
+| `gemini-3-pro-image-preview`     | **Default** — nejlepší kvalita   |
+| `gemini-3.1-flash-image-preview` | Rychlejší                        |
+| `imagen-4.0-generate-001`        | Imagen 4, podporuje `--negative` |
 
 ## Aspect ratios
 
@@ -28,6 +33,7 @@ GEMINI_API_KEY=$(grep GEMINI_API_KEY .env | cut -d= -f2) \
 ### Krok 1: Generuj přes Gemini
 
 Pro **sprite sheet** (více assetů najednou):
+
 ```bash
 node tools/generate-image.mjs \
   "Pixel art sprite sheet of 8 breakout bricks in horizontal row, evenly spaced on pure black background. Colors: pink, red, orange, gold, green, cyan, blue, purple. Each brick ~2.5:1 aspect ratio, neon style, dark outline. No text." \
@@ -36,6 +42,7 @@ node tools/generate-image.mjs \
 ```
 
 Pro **jednotlivý asset**:
+
 ```bash
 node tools/generate-image.mjs \
   "Pixel art paddle bar for breakout game. Neon cyan, wide flat rectangle, white highlight, dark outline, glow. Pure black background. No text." \
@@ -44,6 +51,7 @@ node tools/generate-image.mjs \
 ```
 
 #### Promptovací pravidla
+
 - **Vždy specifikuj pozadí**: `pure black background` (pro tmavé hry) nebo `pure white background` (pro světlé)
 - **Vždy `No text, no other elements`** — jinak Gemini přidá random text
 - **Specifikuj proporce**: `~2.5:1 aspect ratio`, `7 times wider than tall`
@@ -73,6 +81,7 @@ node tools/process-sprites.mjs <input> [options]
 | `--no-transparent` | Přeskoč odstranění pozadí |
 
 #### Jednotlivý asset
+
 ```bash
 node tools/process-sprites.mjs raw-paddle.png \
   --out public/assets/games/breakout/paddle.png \
@@ -80,6 +89,7 @@ node tools/process-sprites.mjs raw-paddle.png \
 ```
 
 #### Sprite sheet → jednotlivé soubory
+
 ```bash
 node tools/process-sprites.mjs sheet-raw.png \
   --split --names head,body,corner,tail \
@@ -88,6 +98,7 @@ node tools/process-sprites.mjs sheet-raw.png \
 ```
 
 #### Dvouprůchodové zpracování (bílý sheet s černým pozadím spritů)
+
 ```bash
 # 1. Rozřež sheet (odstraní bílé bg)
 node tools/process-sprites.mjs sheet-raw.png \
@@ -115,11 +126,11 @@ rm -f *-raw.png *-sheet.png *-gen.png *-new.png
 
 ## Kam ukládat finální assety
 
-| Typ | Cesta |
-|-----|-------|
-| Game sprites | `public/assets/games/{slug}/{asset}.png` |
-| Game thumbnail | `public/assets/games/{slug}/thumbnail.png` |
-| Hero banner | `public/assets/placeholders/hero-banner.png` |
+| Typ                | Cesta                                           |
+| ------------------ | ----------------------------------------------- |
+| Game sprites       | `public/assets/games/{slug}/{asset}.png`        |
+| Game thumbnail     | `public/assets/games/{slug}/thumbnail.png`      |
+| Hero banner        | `public/assets/placeholders/hero-banner.png`    |
 | Placeholder thumbs | `public/assets/placeholders/game-thumb-{n}.jpg` |
 
 ---
@@ -129,6 +140,7 @@ rm -f *-raw.png *-sheet.png *-gen.png *-new.png
 Gemini generuje velké obrázky (800-1400px). V Phaseru se zobrazují malé (40x16, 80x12, atd).
 
 **VŽDY v kódu:**
+
 ```typescript
 sprite.setDisplaySize(TARGET_W, TARGET_H);
 // Pro dynamic body:
@@ -145,6 +157,7 @@ Bez `updateFromGameObject()` na static bodies bude physics hitbox na špatné po
 ## Reference images
 
 Pro style-matching přidej `--ref`:
+
 ```bash
 node tools/generate-image.mjs "new brick style matching reference" \
   --ref public/assets/games/breakout/brick-0.png \
