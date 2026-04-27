@@ -9,6 +9,16 @@ Build 2D browser games using Phaser 3's scene-based architecture and physics sys
 
 ---
 
+## Before Starting A New Game Or Touching An Existing One
+
+**Read [read-before-implement.md](references/read-before-implement.md) first.** Three-layer reading order (skill docs → target game → shared helpers) and the pre-implementation output checklist. Skipping this is the #1 source of invented APIs and wrong assumptions.
+
+**Before merging to main**, run the relevant checks in [pre-release-audit.md](references/pre-release-audit.md) — 7 reactive error signatures + 7 proactive consistency checks (asset keys, scene registration, `reloadDocument` on game links, touch-controls cleanup, viewport restart guard).
+
+**When reaching for abstraction**, consult [game-patterns.md](references/game-patterns.md) first — it catalogs composition patterns (BehaviorManager, FSM, TurnManager, WaveManager, CardManager, DialogueManager) with explicit "when to extract" vs "stay ad-hoc" signals. Prevents premature abstraction.
+
+---
+
 ## STOP: Before Loading Any Spritesheet
 
 **Read [spritesheets-nineslice.md](references/spritesheets-nineslice.md) FIRST.**
@@ -31,6 +41,9 @@ Read these BEFORE working on the relevant feature:
 
 | When working on...                                                                                                                                                                                                                   | Read first                                                                    |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| Starting a new game, or editing a scene you haven't touched recently                                                                                                                                                                 | [read-before-implement.md](references/read-before-implement.md)               |
+| Pre-merge / pre-release audit, or diagnosing a runtime error                                                                                                                                                                         | [pre-release-audit.md](references/pre-release-audit.md)                       |
+| Deciding whether to extract an FSM / BehaviorManager / TurnManager / WaveManager / CardManager / DialogueManager                                                                                                                     | [game-patterns.md](references/game-patterns.md)                               |
 | Loading ANY spritesheet                                                                                                                                                                                                              | [spritesheets-nineslice.md](references/spritesheets-nineslice.md)             |
 | Nine-slice UI panels                                                                                                                                                                                                                 | [spritesheets-nineslice.md](references/spritesheets-nineslice.md)             |
 | Config, scenes, objects, input, animations                                                                                                                                                                                           | [core-patterns.md](references/core-patterns.md)                               |
