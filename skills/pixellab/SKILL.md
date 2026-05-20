@@ -1,5 +1,8 @@
 # PixelLab MCP Skills
 
+**Oficiální MCP dokumentace (nástroje, parametry, workflow):** https://api.pixellab.ai/mcp/docs  
+Při nejasnostech k nástrojům nejdřív `mcp_pixellab_agent_help`, případně načíst tuto URL.
+
 ## Reference Files
 
 Read these BEFORE working on the relevant feature:
