@@ -1,480 +1,257 @@
-# PixelLab MCP Skills
+# PixelLab Skills (MCP-first)
 
-## Reference Files
+Pixel-art asset generation for `app/games/**`. **The PixelLab MCP server is the default
+path** — it is connected this session as `mcp__pixellab__*` tools, lands every asset in the
+PixelLab dashboard (reusable, style-chainable), and bills against our subscription. Use the
+local `scripts/pixellab.mjs` only for the one thing the MCP can't do (assemble an animated
+WebP) and as an emergency REST fallback.
 
-Read these BEFORE working on the relevant feature:
-
-| When working on...                          | Read first                                                      |
-| ------------------------------------------- | --------------------------------------------------------------- |
-| Sidescroller platform tiles (2D platformer) | [sidescroller-tilesets.md](references/sidescroller-tilesets.md) |
-| Top-down Wang tilesets (strategy/RPG maps)  | See Wang section below                                          |
-
----
-
-## Sidescroller Tileset (2D Platformers)
-
-### When to use
-
-- Side-view platform tiles for platformer/runner games
-- Ground, floating platforms, crumbling platforms
-- **Read [sidescroller-tilesets.md](references/sidescroller-tilesets.md) for full reference**
-
-### Quick summary
-
-- `create_sidescroller_tileset` → 16 Wang tiles, 32×32, transparent bg
-- `lower_description` = material, `transition_description` = surface decoration
-- `transition_size`: 0.25 (light) or 0.5 (heavy surface)
-- Chain with `base_tile_id` + high `tileset_adherence` (300–400) for matching sets
-- Always `outline: "lineless"`
+**Official docs / disambiguation:** `mcp__pixellab__agent_help` (a docs-search agent — ask it
+≤500-char questions). MCP tool reference: https://api.pixellab.ai/mcp/docs · REST reference:
+https://api.pixellab.ai/v2/llms.txt (+ full param/cost detail in `…/v2/openapi.json`).
 
 ---
 
-## Wang Tileset (Top-Down Maps) — PREFERRED for terrain
+## Golden rules
 
-### When to use
-
-- Path/road vs terrain transitions (dirt↔stone, grass↔water, etc.)
-- Any two-terrain autotiling system
-- Replaces ALL manual corner/T-junction/straight tile work
-
-### Workflow
-
-1. **Generate**: `create_topdown_tileset`
-   - `lower_description` = ground terrain (e.g. "dark brown dirt path")
-   - `upper_description` = elevated terrain (e.g. "dark grey stone floor")
-   - `transition_description` = edge blend (e.g. "crumbling edge")
-   - `tile_size: {width: 32, height: 32}`
-   - `outline: "lineless"` (user preference!)
-   - `transition_size: 0.25` (small transition) or `0.5` (larger)
-   - `view: "high top-down"` for flat tiles
-   - Takes ~100 seconds
-
-2. **Download**: PNG (4×4 spritesheet, 128×128) + metadata JSON
-
-   ```bash
-   curl --fail -o wang-tileset.png "https://api.pixellab.ai/mcp/tilesets/{id}/image"
-   curl --fail -o wang-tileset.json "https://api.pixellab.ai/mcp/tilesets/{id}/metadata"
-   ```
-
-3. **Build frame lookup** from JSON:
-   - Each tile has `corners: {NW, NE, SW, SE}` = "upper" | "lower"
-   - Wang index = NW×8 + NE×4 + SW×2 + SE×1 (upper=1, lower=0)
-   - Frame = (bounding_box.y/32)\*4 + (bounding_box.x/32)
-   - Build array: `WANG_FRAME[wangIdx] = frame`
-
-4. **Render in Phaser**:
-
-   ```typescript
-   // boot.ts
-   this.load.spritesheet("wang-tileset", url, {
-     frameWidth: 32,
-     frameHeight: 32,
-   });
-
-   // game.ts — vertex terrain algorithm
-   // Vertex (vr,vc) sits between cells (vr-1,vc-1), (vr-1,vc), (vr,vc-1), (vr,vc)
-   // Vertex = 0 (lower) if ANY surrounding cell is target terrain, else 1 (upper)
-   const vertex = (vr, vc) => {
-     return isPath(vr - 1, vc - 1) ||
-       isPath(vr - 1, vc) ||
-       isPath(vr, vc - 1) ||
-       isPath(vr, vc)
-       ? 0
-       : 1;
-   };
-
-   // For each grid cell:
-   const nw = vertex(r, c);
-   const ne = vertex(r, c + 1);
-   const sw = vertex(r + 1, c);
-   const se = vertex(r + 1, c + 1);
-   const wangIdx = nw * 8 + ne * 4 + sw * 2 + se;
-   this.add.image(x, y, "wang-tileset", WANG_FRAME[wangIdx]);
-   ```
-
-### Chaining tilesets
-
-- Response includes `base_tile_ids.upper` and `.lower`
-- Use upper ID as `lower_base_tile_id` in next tileset for seamless multi-terrain:
-  - Tileset 1: dirt → stone (get stone base ID)
-  - Tileset 2: stone → grass (use stone ID as lower_base_tile_id)
-- **Note**: Chaining via `lower_base_tile_id` param may error — generate independently with matching descriptions instead
-
-### Multi-tileset layering (terrain variety)
-
-- All PixelLab Wang tilesets use **identical tile layout** → same `WANG_FRAME` lookup for all
-- **Layer 1 (base)**: render full grid (e.g., void → snow for arena border)
-- **Layer 2+ (overlay)**: generate random blob shapes, render with second tileset, **skip `wangIdx === 0`** (all-lower = base shows through)
-- Use `RenderTexture` to composite all layers into one texture (performance)
-- Describe overlay tileset lower terrain to MATCH base tileset upper terrain for seamless blending
-
-### Download gotcha
-
-- Wang tileset PNG download: always `curl -L --fail` (API returns 302 redirect, without `-L` you get 0 bytes)
+1. **MCP-first.** Generate through `mcp__pixellab__*`. Reach for `scripts/pixellab.mjs` only for
+   `webp` assembly or if the MCP server is unreachable.
+2. **Write BIG, exact descriptions.** PixelLab rewards long, fully-specified prompts: subject,
+   view angle, palette, lighting, material, silhouette, and an explicit list of what to EXCLUDE.
+   Vague prompts waste generations. (See "Writing prompts".)
+3. **Style-lock related assets** with `create_object_state` / `create_character_state` on a
+   completed parent — never cold-generate siblings (loses palette/identity). See [[feedback-pixellab-card-state-parent]], [[feedback-claimer-sprite-refs]].
+4. **Never save binary with the Write tool** — it corrupts PNGs to zero-filled garbage.
+   `curl -L` the rotation URL, then `file`-verify.
+5. **Bump the filename on any asset replacement** (`-v3` → `-v4`) — `public/assets/**` is
+   immutable-cached 1y + 30d nginx. See [[feedback-nginx-static-cache]].
+6. **PixelLab only — no PixelForge fallback** for game sprites. See [[feedback-pixellab-only-for-games]].
 
 ---
 
-## Tiles Pro (Individual Tiles)
+## ⚠️ Tool-name reality check
 
-### When to use
+There is **NO** `create_object` and **NO** `vary_object` tool — those names (in older memory) were
+never real. The actual primitives on the connected server are:
 
-- UI elements, decorations, standalone objects
-- When you need specific tile variants (NOT terrain transitions)
-
-### Key settings
-
-- `tile_type: "square_topdown"`, `tile_view: "top-down"`, `tile_size: 32`
-- **Always `outline: "lineless"`** — user hates borders
-- Number each tile in description: `"1). tile A 2). tile B 3). tile C"`
-- `n_tiles` must match description count
-
-### Gotcha: Small pickups/projectiles look BAD as tiles
-
-- 16×16 tile squares look blocky when used as tiny in-game pickups (xp gems, health orbs) or projectiles
-- **Programmatic shapes** (circles, triangles via Graphics API) look BETTER for small game objects
-- Only use Tiles Pro for objects that are displayed at actual tile size (32×32+) like decorations, UI elements
-
-### Gotcha: Corner tile orientation
-
-- PixelLab corner tiles often have WRONG orientation vs their name
-- "corner south to east" may actually show path going west→south
-- **Always verify visually** at 10× zoom before using
-- Prefer Wang tileset over manual corner tiles — avoids this problem entirely
+| You want…                                  | Real MCP tool                                                  |
+| ------------------------------------------ | -------------------------------------------------------------- |
+| One static sprite / prop / icon            | `create_1_direction_object`                                    |
+| Same object from 8 angles (rotations)      | `create_8_direction_object`                                    |
+| A variant **in the same style** as an object | `create_object_state` (source `object_id` + `edit_description`) |
+| Throwaway object (auto-deletes 8h) + inpaint | `create_map_object`                                            |
+| Rigged character (4/8 dir, walk cycles)    | `create_character` → `create_character_state` → `animate_character` |
+| Motion on an existing object               | `animate_object` (mode `v3` = cheap default)                   |
+| Terrain autotiling                         | `create_topdown_tileset` / `create_sidescroller_tileset`       |
+| Tile variants / isometric                  | `create_tiles_pro` / `create_isometric_tile`                   |
+| Poll any of the above                      | `get_object` / `get_character` / `get_*_tileset`               |
+| Pick from a `review` candidate grid        | `select_object_frames` / `dismiss_review`                      |
+| Balance                                    | `get_balance`                                                  |
 
 ---
 
-## Characters & Enemies
+## Canonical flow: create → poll → download (verified)
 
-### Humanoid/Quadruped — use `create_character`
+Generation is **asynchronous**. The create call returns an id immediately; you poll until
+`completed`, then download the PNG from a **public** URL.
 
-- `body_type: "humanoid"` — bipedal (people, robots, knights)
-- `body_type: "quadruped"` + `template` — 4-legged (bear, cat, dog, horse, lion)
-- South = default facing, East = side view, North = back view
-- West = East sprite with `setFlipX(true)` in Phaser
-- `animate_character` for walk/run/attack frames
+```
+1. create_1_direction_object({ description, size }) → returns object_id
+2. get_object({ object_id, include_preview: false })   # poll every ~10–30s
+     status: processing  → progress + ETA, keep polling
+     status: review      → candidate grid (see "Review gate") — select or dismiss
+     status: completed   → has `rotations:` + `download:`
+     status: failed      → error + retry hint
+3. Download the PNG. `get_object` (completed) returns, exactly:
+     rotations:
+       <dir>: https://backblaze.pixellab.ai/file/pixellab-characters/objects/<grp>/<id>/rotations/<dir>.png
+     download: https://api.pixellab.ai/mcp/objects/<id>/download   # zip archive of all frames
+   For a 1-direction object the rotation key is literally `unknown`.
+4. curl -L "<rotation-url>" -o public/assets/games/<game>/<name>-v1.png   # NO auth header needed
+5. file public/assets/games/<game>/<name>-v1.png   # MUST say "PNG image data, WxH, 8-bit/color RGBA"
+```
 
-### Non-humanoid creatures (blobs, slimes, mushrooms) — use `create_map_object`
+**Download facts (verified live):** rotation URLs are public Backblaze links — a plain
+`curl -L` with **no `Authorization` header** returns the real PNG (HTTP 200). The MCP never
+returns raw bytes and never writes files; it only hands back URLs (+ an optional inline
+preview when `include_preview` is true — for eyeballing, not for saving). Poll budgets:
+1-dir/tiles ~15–90s, 8-dir/characters ~2–4 min, tilesets ~100s.
 
-- **NEVER use `create_character` for blobs/slimes** — humanoid template forces legs!
-- Generate each direction as separate map object (south, east, north)
-- Generate walk frames as separate map objects with pose variations (squished, stretched, tilted)
-- Describe explicitly: "no legs, no arms, no human features, blob body"
-- Walk animation = 4 map objects with different squish/stretch states
+### Review-status gate (don't lose your asset)
+
+`create_1_direction_object` with `size ≤ 170` returns **multiple candidates** in `review`
+status (≤42→64 candidates, ≤85→16, ≤170→4). `get_object` shows them inline; you **must** then
+call `select_object_frames({ object_id, indices: [n] })` to promote the good one(s) into their
+own completed objects, or `dismiss_review` to discard. Leave it and the asset never finalizes.
+Use `size ≥ 171` to get a single candidate with no review step.
 
 ---
 
-## Map Objects
+## Style consistency: object-states & style-refs
 
-### `create_map_object`
+Build a family of related sprites by editing a **completed parent**, not by re-prompting:
 
-- Generates objects with transparent background
-- Can style-match against existing map (provide background_image)
-- Good for: barrels, torches, chests, decorations
-- Supports inpainting (oval/rectangle/custom mask)
+```
+create_1_direction_object({ description: "<the first/base sprite>", size: 48 })  → parentId
+create_object_state({ object_id: parentId, edit_description: "make it a green shell instead" })
+create_object_state({ object_id: parentId, edit_description: "make it a lightning bolt instead" })
+```
+
+All variants share palette/outline/identity via an automatic `group_id`. This is the
+proven pattern for the mau-mau card faces (parent `06f843eb-abc3-4b2e-a7ee-c2974acbebb1` —
+`create_object_state` ONLY, never a fresh `create_*`) and the claimer directional sprites.
+For style-matching across a totally new object, pass `style_images` to `create_1_direction_object`
+(largest style image's size sets output size — don't also pass `size`).
 
 ---
 
-## PixelLab API v2 — via `scripts/pixellab.mjs` (Node, replaces the old bash)
+## Writing prompts (the single biggest quality lever)
 
-The project ships `scripts/pixellab.mjs` — a zero-dependency Node CLI for the PixelLab REST API v2. The older `scripts/pixellab.sh` has been removed because it hid flags inside commands and mis-saved raw-RGBA responses as broken PNGs.
+PixelLab interprets a long, exact description far better than a terse one. Always specify:
+**subject + view + palette + lighting/shading + material/texture + silhouette + EXCLUSIONS.**
 
-**API key:** `PIXELLAB_API_KEY` from `.env` (auto-loaded).
-**Full API reference:** https://api.pixellab.ai/v2/llms.txt — read this first when adding new commands.
+✅ Good: *"Single top-down pixel-art banana-peel power-up icon, 48×48, lineless flat shading,
+transparent background. Glossy yellow curved peel lying flat as if dropped on a track, small
+brown bruise tip, soft inner neon-yellow rim glow, dark drop-shadow blob beneath. Centered,
+no text, no border, no frame."*
 
-### Command map
+❌ Bad: *"a banana item"* — model guesses size, view, palette, adds a background/border.
 
-| Need                                   | Use                                           |
-| -------------------------------------- | --------------------------------------------- |
-| Isolated item/sprite (transparent bg)  | `pixellab.mjs sprite`                         |
-| Scene / background (opaque pixels)     | `pixellab.mjs background`                     |
-| New sprite matching reference style    | `pixellab.mjs style`                          |
-| Animate a static frame                 | `pixellab.mjs animate`                        |
-| Combine frames into animated WebP      | `pixellab.mjs webp`                           |
-| Check credit/generation balance        | `pixellab.mjs balance`                        |
-| Characters + per-direction animations  | MCP: `create_character` + `animate_character` |
-| Wang / sidescroller / topdown tilesets | MCP: `create_*_tileset`                       |
-| Map objects (barrels, chests, items)   | MCP: `create_map_object`                      |
-
-### sprite — isolated pixel art (64×64 default)
-
-```bash
-./scripts/pixellab.mjs sprite \
-  --description "raw copper ore chunk, orange veins, side view" \
-  --size 64x64 \
-  --out public/assets/games/mygame/tier-02-copper.png
-```
-
-- Sends `no_background: true` — output has transparent pixels around the subject.
-- Size up to `792×688` but constrained by aspect ratio (see gotcha below).
-
-### background — full scene (NO white border pad)
-
-```bash
-./scripts/pixellab.mjs background \
-  --description "dark mining cave interior, purple crystals, no people, no characters, edge to edge full bleed, no border, no frame, no padding" \
-  --size 256x384 \
-  --out public/assets/games/mygame/bg.png
-```
-
-- Sends `no_background: false` — keeps the scene opaque.
-- **CRITICAL:** Always include "no border, no frame, no padding, edge to edge, full bleed" in the prompt, or the model will draw your scene in the middle of a white canvas and you'll get white edges. See "White-border gotcha" below.
-- If you explicitly don't want characters, add "no people, no characters, no figures" — models default to populating scenes.
-
-### style — generate new sprite in an existing sprite's style
-
-```bash
-./scripts/pixellab.mjs style \
-  --ref public/assets/games/mygame/hero.png \
-  --description "goblin with a rusty dagger" \
-  --size 128x128 \
-  --out /tmp/goblin.png
-```
-
-- **Size MUST be square** (API limitation). Max 512×512.
-- Reference image goes into the `style_images: [{image, width, height}]` shape — the Node script reads PNG dimensions directly from the IHDR chunk.
-
-### animate — turn a static frame into an N-frame animation
-
-```bash
-./scripts/pixellab.mjs animate \
-  --input /tmp/hero-south.png \
-  --action "walking forward" \
-  --frames 8 \
-  --out-dir /tmp/hero-walk
-```
-
-- Frame count must be even, 4-16.
-- **Caveat:** `animate-with-text-v3` is GENERATIVE — the API reinterprets your input as a concept. It does NOT preserve pixel-exact sprite identity. Characters/scenes may look subtly different in each frame. Great for character walk cycles, bad for "animate my exact 16-tile grid". For pixel-perfect animation of known sprites, composite programmatically with Python PIL (see "Programmatic animated thumbnails" below).
-- Input max 256×256 — resize before calling if larger.
-
-### webp — combine frames into animated WebP
-
-```bash
-./scripts/pixellab.mjs webp \
-  --in-dir /tmp/hero-walk \
-  --out public/assets/games/mygame/hero-walk.webp \
-  --duration 150
-```
-
-- Uses `img2webp` from libwebp (must be on PATH — installed via Homebrew alongside `cwebp`).
-- `--duration` is milliseconds per frame. 120-150ms = smooth loop for thumbnails.
-
-### Gotcha: aspect-ratio max
-
-The absolute max of `generate-image-v2` is `792×688`, but the API clamps based on your aspect ratio:
-
-```
-API 400: image_size must be between 16x16 and 424x632 for this aspect ratio. Got 480x688
-```
-
-Translation: for a tall portrait (~0.7 aspect) the actual max is 424×632. Let the API error message tell you the real limit — don't guess. Square images go up to ~500+, very-portrait/landscape ratios get squeezed.
-
-### Gotcha: White-border trap on backgrounds
-
-**Symptom:** You call `background` with a scene prompt ("mining cave with crystals"), get a 128×192 PNG back, and every edge pixel is `(254, 254, 254)` — white.
-
-**Cause:** Without explicit "edge to edge, no border, no padding" language, `generate-image-v2` treats your scene as a centered subject and pads everything outside with a white canvas. A blurry vignette in the middle, white around it. `no_background: false` does NOT fix this — the white IS the background the model chose to draw.
-
-**Fixes:**
-
-1. Prompt language: `"...edge to edge, full bleed composition, no white border, no frame, no padding, fills entire canvas seamlessly"`
-2. Use a larger canvas — small sizes (≤192 px) make the model more prone to shrinking the subject. `256×384` or bigger usually fills the frame.
-3. After generation, verify: `python3 -c "from PIL import Image; img=Image.open('bg.png').convert('RGBA'); print(img.getpixel((0,0)))"` — if the top-left pixel is near-white, regenerate.
-
-### Gotcha: Raw RGBA vs real PNG
-
-PixelLab sometimes returns the generated image as base64-encoded raw RGBA pixel bytes instead of a base64-encoded PNG. The old `pixellab.sh` blindly wrote those bytes to `.png`, creating files that `file` reports as `"data"` (not PNG) and nothing can render.
-
-**The Node script auto-detects this:** it checks the first 8 bytes for the PNG signature (`89 50 4e 47 0d 0a 1a 0a`). If missing, it wraps the raw RGBA into a proper PNG via the built-in zlib encoder. You don't need to think about this — just always `file <path>` after a generation to confirm.
-
-### Verifying output (always do this)
-
-```bash
-file public/assets/games/mygame/*.png
-# → "PNG image data, WxH, 8-bit/color RGBA, non-interlaced"
-```
-
-If any file says `"data"` or `"JPEG image data"` or `"RIFF"` when you expected PNG, it's broken. Regenerate before moving on — don't ship broken assets and don't try to fix them in-place.
-
-### Optimizing assets after generation
-
-```bash
-# Crunch PNGs — 60-85% quality is virtually indistinguishable for pixel art
-pngquant --force --quality=60-85 --ext .png public/assets/games/mygame/*.png
-```
-
-A fresh `bg.png` at 256×384 can drop from ~130KB to ~50KB with no visible difference.
+- `outline: "lineless"` almost always (user hates borders).
+- For opaque scenes add *"edge to edge, full bleed, no border, no frame, no padding"* or you get a
+  white-canvas vignette. For "no characters" say so explicitly — models populate scenes by default.
+- `detail: "medium detail"`, `shading: "medium shading"` are good defaults. Use `seed` for reproducibility.
 
 ---
 
-## Saving Images from MCP Responses (CRITICAL)
+## Cost model (dual bucket — the old "16 credits/call" rule is WRONG)
 
-PixelLab MCP is a **remote server** — it returns base64/URL data but CANNOT write files to disk.
+`get_balance` shows **two separate buckets**:
 
-### Rules
+- **Subscription generations** — the primary bucket (Tier 1 = **2000 per billing period**).
+  Each call decrements this first.
+- **USD credits** — a *fallback only*, used when generations are exhausted.
 
-1. **NEVER use the Write tool for image data** — Write is text-only, it corrupts binary PNG → produces zero-filled garbage files
-2. For **MCP map-object / character / tileset** responses, the easiest path is `curl -L --fail` on the download URL the MCP call returns — that already gives you a real PNG. No base64 re-decoding needed.
-3. **ALWAYS verify** saved files with `file <path>` — must show `PNG image data`, not `data`, `JPEG`, or `RIFF`
+Cost is **per call, by endpoint + size — NOT per image.** One v2 call can return a grid of up to
+64 images for the *same* generation cost. So:
 
-### Workflow: MCP tool → save to disk
+- Standard object/character = **1 generation**. v3 character = **2–9**.
+- `create_1_direction_object` / `create_8_direction_object` use Pro Tools = **~20–40 generations** per call by size.
+- **The only real cost cliff is Pro-mode animation: 20–40 generations PER DIRECTION** (a full
+  8-dir Pro animation = 160–320 = ~6–12 of those empties the monthly allowance). **Prefer
+  `mode: "v3"`** (the cheap default, often higher quality). For Pro `animate_*`, call **without**
+  `confirm_cost` first to get the quote, surface it, then re-call with `confirm_cost: true`.
+- `enhance_prompt` silently adds 0.05 generations.
 
-```bash
-# 1. Call MCP (create_map_object, create_character, etc.) → returns an object ID
-# 2. Call the corresponding get_* MCP tool → returns a download URL
-# 3. Download with curl:
-curl -L --fail -o public/assets/games/mygame/tile.png \
-  "https://api.pixellab.ai/mcp/map-objects/{object_id}/download"
-
-# 4. Verify:
-file public/assets/games/mygame/tile.png
-# → must say "PNG image data, ..."
-```
-
-### Why this matters
-
-In a previous incident, Claude used the Write tool to save PixelLab base64 data. Write only handles UTF-8 text — binary PNG bytes get corrupted to zero-filled buffers. Result: 145 broken files that looked like PNGs but contained only null bytes. Use `curl` for URLs, `pixellab.mjs` for API v2, and always `file`-verify.
+Check `get_balance` before a big batch; budget by *calls*, not by samples.
 
 ---
 
-## Animated Thumbnails & Menu Backgrounds
+## File-saving rules
 
-### Overview
-
-Games can have animated thumbnails (shown on catalog page) and animated menu backgrounds (shown in Phaser menu scene). There are **two distinct approaches** depending on whether you need to preserve exact pixel identity.
-
-### Approach A — Programmatic compositing (PREFERRED for game assets)
-
-Use this when the user wants "animate my thumbnail using the game's real sprites". `animate-with-text-v3` reinterprets the input as a concept and will NOT preserve your pixel-exact tiles — it generates new gems/characters that look _similar_ but are not your sprites.
-
-Instead, composite a static grid from the actual tier PNGs, then generate frames in Python that add overlay effects (sparkles, pulse, drifting particles) while keeping the base sprites pixel-perfect. Then stitch into an animated WebP.
-
-**Workflow (used for ore-merge, ~140KB WebP, 12 frames):**
-
-```python
-# 1. Composite actual game sprites into a grid layout
-from PIL import Image, ImageDraw, ImageEnhance
-import math, random
-
-base = Image.new('RGBA', (288, 288), (20, 16, 30, 255))  # dark card bg
-draw = ImageDraw.Draw(base)
-
-GRID, CELL, GAP, PAD = 4, 64, 4, 10
-for row in range(GRID):
-    for col in range(GRID):
-        cx = PAD + col * (CELL + GAP)
-        cy = PAD + row * (CELL + GAP)
-        # Darker cell background so sprites pop
-        draw.rectangle([cx, cy, cx + CELL - 1, cy + CELL - 1], fill=(30, 27, 46, 255))
-        sprite = Image.open(f'public/assets/games/mygame/tier-{tier_idx:02d}.png').convert('RGBA')
-        base.alpha_composite(sprite, (cx, cy))
-base.save('/tmp/composite.png')
-
-# 2. Generate N animation frames with overlay effects
-random.seed(42)
-sparkles = [(random.randint(12, 276), random.randint(12, 276), random.choice([(255,215,50),(200,120,255)]), random.random()*math.pi*2) for _ in range(14)]
-
-for i in range(12):
-    frame = base.copy()
-    t = i / 12
-    # Subtle scene-wide brightness pulse
-    frame = ImageEnhance.Brightness(frame).enhance(0.92 + 0.08 * math.sin(t * math.pi * 2))
-    # Twinkle sparkles (alpha modulated by sin)
-    draw = ImageDraw.Draw(frame, 'RGBA')
-    for (sx, sy, (r, g, b), phase) in sparkles:
-        alpha = int((0.4 + 0.6 * (0.5 + 0.5 * math.sin(t * math.pi * 2 + phase))) * 255)
-        draw.rectangle([sx, sy, sx+1, sy+1], fill=(r, g, b, alpha))
-        # Cross arms at half alpha
-        for dx, dy in [(-2, 0), (2, 0), (0, -2), (0, 2)]:
-            draw.rectangle([sx+dx, sy+dy, sx+dx+1, sy+dy+1], fill=(r, g, b, alpha // 2))
-    frame.save(f'/tmp/frames/frame-{i:02d}.png')
-```
-
-```bash
-# 3. Stitch into animated WebP
-./scripts/pixellab.mjs webp \
-  --in-dir /tmp/frames \
-  --out public/assets/games/mygame/thumbnail-animated.webp \
-  --duration 120
-
-# 4. Update registry.ts:
-#    thumbnailUrl: "/assets/games/mygame/thumbnail-animated.webp",
-```
-
-**Why this beats animate-with-text-v3 for this use case:**
-
-- Your real game sprites stay visible and pixel-perfect in every frame.
-- Cheap (no API credits used for animation) and fast (~1s Python run).
-- Deterministic — same input always produces the same WebP.
-- Full control over motion (pulse speed, sparkle density, colors, particle behavior).
-
-### Approach B — `animate-with-text-v3` (for characters and genuine motion)
-
-Use this when you want actual character motion (walk/run/attack cycles) or genuine concept animation. The API regenerates each frame from the concept, so don't use it when you need to preserve a specific sprite grid.
-
-```bash
-# Resize if source is >256px (API max)
-sips -z 192 256 public/assets/games/mygame/hero-idle.png --out /tmp/hero-256.png
-
-# Generate 8 animation frames
-./scripts/pixellab.mjs animate \
-  --input /tmp/hero-256.png \
-  --action "walking forward" \
-  --frames 8 \
-  --out-dir /tmp/hero-walk
-
-# Stitch into WebP
-./scripts/pixellab.mjs webp \
-  --in-dir /tmp/hero-walk \
-  --out public/assets/games/mygame/hero-walk.webp \
-  --duration 120
-```
-
-### Animated Menu Background (Phaser)
-
-Generate frames with either approach, then load them as separate textures and play as a Phaser animation:
-
-```typescript
-// boot.ts
-for (let i = 0; i < 9; i++) {
-  this.load.image(`menu-bg-${i}`, `${base}/menu-bg-${i}.png`);
-}
-
-// After load (in create())
-if (this.textures.exists("menu-bg-0")) {
-  this.anims.create({
-    key: "menu-bg-anim",
-    frames: Array.from({ length: 9 }, (_, i) => ({ key: `menu-bg-${i}` })),
-    frameRate: 6,
-    repeat: -1,
-  });
-}
-
-// menu.ts
-if (this.anims.exists("menu-bg-anim")) {
-  this.add
-    .sprite(width / 2, height / 2, "menu-bg-0")
-    .setDisplaySize(width, height)
-    .setAlpha(0.65)
-    .setDepth(-1)
-    .play("menu-bg-anim");
-}
-```
-
-### Animation prompt tips (for API-based animate)
-
-- **Thumbnails**: "gems sparkling, petals drifting" — keep subtle, scene should stay recognizable
-- **Backgrounds**: "wind blowing, ambient movement" — no drastic changes between frames
-- **Characters**: "walking forward", "attacking", "idle breathing" — clear verb, direction if relevant
-- Duration 120-150ms/frame is the sweet spot for smooth loops without jitter
-- 8 frames minimum, 12 for extra smoothness, 16 max (API hard limit)
+1. **Never** use the Write tool for image data (corrupts binary → zero-filled file).
+2. Download via `curl -L "<rotations.<dir>>" -o <path>` (no auth header). The `download:` URL is a
+   **zip archive** of all frames — use it only when you want every rotation/frame at once.
+3. **Always** `file <path>` — must report `PNG image data, …, RGBA`. If it says `data`/`JPEG`/`RIFF`,
+   it's broken; regenerate, don't patch in place.
+4. Optimize after: `pngquant --force --quality=60-85 --ext .png <path>` (60–85% is indistinguishable
+   for pixel art; a 256×384 bg drops ~130KB → ~50KB).
+5. Replacing an existing asset? **Bump the filename suffix** and update the loader key (nginx cache).
 
 ---
 
-## General Tips
+## Animation & animated thumbnails
 
-- Always check generation status with `get_*` before downloading
-- Use `seed` parameter for reproducible results
-- B2 storage URLs are permanent — can reference directly
-- `detail: "medium detail"` is usually best balance
-- `shading: "medium shading"` for most game tiles
+- **In-engine motion:** `animate_object({ object_id, animation_description, mode: "v3" })` (1 gen/dir,
+  `frame_count` 4–16, default 8 → stores 9 incl. a ref frame). Poll `get_object`; completed response
+  lists `animations:` with downloadable frame URLs (Backblaze, same as rotations).
+- **Animated thumbnails / menu loops:** download the frames, then assemble locally with
+  `scripts/pixellab.mjs webp --in-dir <frames> --out <x>.webp --duration 120`. **The MCP/REST cannot
+  assemble a WebP — this is the one irreplaceable local step.** See [[feedback-pixellab-animate-webp]].
+- **Pixel-exact thumbnails** (compose the game's REAL sprites with overlay sparkle/pulse, then WebP):
+  prefer this when identity must be preserved — generative `animate-with-text-v3` reinterprets the
+  concept and will NOT keep your exact pixels. (The reason is pixel-identity, not cost.) Full PIL recipe in
+  [[feedback-pixellab-animate-webp]] / the api-v2-extra reference.
+
+---
+
+## `scripts/pixellab.mjs` — fallback + WebP assembler (NOT broken)
+
+The audit confirmed its commands are valid REST calls; it is **superseded for static work**, not
+broken. Keep it. Reads `PIXELLAB_API_KEY` from `.env` (already set).
+
+| Command                        | Status                                                                 |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `webp`                         | **LOAD-BEARING** — local `img2webp` (libwebp); no MCP/REST equivalent. |
+| `sprite` / `background` / `style` | Valid `generate-image-v2`/`generate-with-style-v2` fallback. Default to MCP `create_1_direction_object` / `create_object_state` instead (dashboard + style-lock). |
+| `animate`                      | Generative (breaks pixel identity) — prefer MCP `animate_object` v3.   |
+| `balance`                      | Redundant with MCP `get_balance`.                                      |
+
+Hard host prerequisite for `webp`: `img2webp` from libwebp (`brew install webp`). One genuine use
+where the script wins: a **wide panoramic banner** (e.g. a skybox strip) — MCP object tools pad
+toward square, so `pixellab.mjs sprite` with an explicit wide `--size` is the right tool there.
+⚠️ But `generate-image-v2` caps aspect at ~688×384 (16:9) — extreme strips (e.g. 1024×192) exceed it;
+generate a seamless tile within the cap and let the engine `TileSprite` repeat it.
+
+---
+
+## Tilesets — Wang (top-down) PREFERRED for terrain
+
+`create_topdown_tileset` → 16 Wang tiles (23 if `transition_size: 1.0`), 32×32, `outline: "lineless"`.
+`lower_description` = ground, `upper_description` = elevated, `transition_description` = edge blend.
+~100s. Chain seamless multi-terrain via the returned base tile IDs.
+
+**Download:** `curl -L --fail` (302 redirect → 0 bytes without `-L`).
+
+**Wang index + Phaser integration** (vertex-terrain algorithm, frame lookup, RenderTexture layering)
+— unchanged and correct; see the detailed recipe in the **api-v2-extra** reference and below.
+
+```
+Wang index = NW×8 + NE×4 + SW×2 + SE×1   (upper=1, lower=0)
+Frame      = (bbox.y/32)*4 + (bbox.x/32)
+Vertex(vr,vc) = 0 if ANY surrounding cell is target terrain, else 1
+```
+
+- **Sidescroller platform tiles:** `create_sidescroller_tileset` — see [sidescroller-tilesets.md](references/sidescroller-tilesets.md).
+- **Tiles Pro / isometric:** `create_tiles_pro` (number each variant: `"1). grass 2). dirt …"`,
+  `n` must match) / `create_isometric_tile` (`tile_shape` thin/thick/block). Small pickups look
+  BAD as tiles — use Graphics primitives for tiny in-game objects; reserve tiles for 32×32+ decor.
+- **Corner-tile orientation** is often mislabeled — verify at 10× zoom, or just use Wang.
+
+---
+
+## Characters & enemies
+
+- **Humanoid / quadruped:** `create_character` (`body_type`, `mode: standard|v3|pro`, `n_directions` 4|8).
+  Standard = 1 gen; v3 = 2–9 (always 8-dir, top quality); pro = 20–40. Canvas is ~40% larger than the
+  requested size (leaves animation room) — slice sheets accordingly.
+- **Variants** (armor color, sitting, damaged): `create_character_state` (consistent across all rotations).
+- **Animate:** `animate_character` — `template_animation_id` (walk/run/idle… 1 gen/dir) or
+  `action_description` (custom, v3). South = default facing; West = East with `setFlipX(true)`.
+- **Blobs / slimes / non-humanoid:** NOT `create_character` (forces legs). Use `create_1_direction_object`
+  / `create_map_object` per pose, describe "no legs, no arms, blob body".
+
+---
+
+## Gotchas
+
+- **Base64 image inputs** use `{ "type": "base64", "base64": "<png-bytes-b64>", "format": "png" }` —
+  base64-encoded **PNG**, not raw RGBA, not a data URL.
+- **Size limits vary per endpoint:** generic min 16×16; animation/rotation max 256×256;
+  generate-image-v2/style/ui square ≤512 (16:9 ≤688×384); animate-with-text v1 locked to 64×64;
+  tiles-pro 16–128. Let the API's 400 error tell you the real max for your aspect ratio.
+- **One v2 image call returns a GRID** (up to 64 tiny images), not a single file — parse accordingly.
+- **`no_background`** defaults FALSE on legacy `create-image-*`, TRUE on the v2 Pro endpoints.
+- **Raw-RGBA vs PNG:** some REST responses are base64 raw-RGBA, not PNG; `pixellab.mjs` auto-wraps
+  these. MCP rotation URLs are always real PNGs (verified). Always `file`-check.
+- **Destructive deletes** (`delete_object`/`_character`/`_animation`) need a `confirm=false`-then-`true`
+  two-step; tileset/tile deletes take just the id.
+- `create_map_object` auto-deletes after 8h — download immediately.
+
+---
+
+## General
+
+- `get_balance` is the live source of truth for budget (not the REST `balance` command).
+- Backblaze rotation/B2 URLs are permanent and public — safe to reference while iterating.
+- Always check status with `get_*` before downloading; jobs are auto-cleaned after completion (404).
