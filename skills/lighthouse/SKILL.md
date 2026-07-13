@@ -84,7 +84,7 @@ For real-world prod numbers post-deploy, use the `metrifyr` MCP (`mcp__metrifyr_
 ## Common PixelDen pitfalls (already known)
 
 - **Hero image as CSS `background-image`** — can never be optimal LCP. Always use `<img>` with `srcset`, `width/height`, `fetchPriority="high"`. (Fixed in v0.2.7.)
-- **Public assets (`public/assets/**`) are NOT fingerprinted by Vite.** Combined with `Cache-Control: immutable, max-age=31536000` in nginx, content changes need either a filename bump (`-v2.webp`) or a manual nginx purge. See [Nginx static cache trap](../../../../.claude/projects/-Users-tomasgrasl-projects-nodejs-pixelden/memory/feedback-nginx-static-cache.md) memory.
+- **Public assets (`public/assets/**`) are NOT fingerprinted by Vite.** Combined with `Cache-Control: immutable, max-age=31536000` in nginx, content changes need either a filename bump (`-v2.webp`) or a manual nginx purge — a known nginx static-cache trap.
 - **`game-canvas` useEffect deps** can re-mount Phaser unnecessarily. Verify before blaming network.
 
 ## When NOT to use this skill
