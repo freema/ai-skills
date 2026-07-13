@@ -1,3 +1,13 @@
+---
+name: pixellab
+description: >
+  Pixel-art asset generation for game projects, MCP-first via the connected pixellab
+  MCP server (mcp__pixellab__* tools). Triggers on: "generate pixel art", "make a pixel
+  sprite/tile/character", "animate this sprite", or any pixel-art asset request for
+  app/games/**. Falls back to scripts/pixellab.mjs only for animated WebP assembly or
+  as a REST emergency path.
+---
+
 # PixelLab Skills (MCP-first)
 
 Pixel-art asset generation for `app/games/**`. **The PixelLab MCP server is the default

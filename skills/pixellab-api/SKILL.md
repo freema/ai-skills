@@ -1,3 +1,12 @@
+---
+name: pixellab-api
+description: >
+  Generate pixel art assets via the PixelLab REST API v2 — animations, UI elements,
+  sprites, and image editing. Complements the pixellab MCP server with endpoints not
+  available through MCP. Triggers on: "animate a sprite", "generate pixel-art UI",
+  "rotate/edit a sprite", or when a PixelLab task needs the REST API rather than MCP.
+---
+
 # PixelLab API v2 — Direct Pixel Art Generation
 
 Generate pixel art assets via PixelLab REST API v2 — animations, UI elements, sprites, editing, and more.

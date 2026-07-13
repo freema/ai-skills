@@ -1,3 +1,12 @@
+---
+name: image-generation
+description: >
+  Generate game assets via the Google Gemini image API and process them into
+  final sprite files. Triggers on: "generate an image/asset", "create a sprite",
+  "make game art", or any request to produce or post-process image assets for a game.
+  Wraps tools/generate-image.mjs (model, aspect ratio, reference image, batch count).
+---
+
 # Image Generation & Asset Pipeline
 
 Generuj game assety přes Google Gemini API a zpracuj je do finálních sprite souborů.
