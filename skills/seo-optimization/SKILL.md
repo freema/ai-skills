@@ -187,7 +187,7 @@ To keep your description: make it **a clean summary of the page's main answer** 
 
 - Twitter **falls back to `og:*`** for title/description/image when `twitter:*` is missing — but **`twitter:card` itself is NOT inferred from OG**. Without it, no card renders ([2026 Twitter Card guide](https://ogmagic.dev/blog/twitter-card-image-guide)).
 - Twitter's preferred image ratio is **2 : 1 (1200 × 600 or 1200 × 675)**. Our 1.91 : 1 OG image still works — gets minor side-crop. If we author a Twitter-specific image, prefer 1200 × 675.
-- **Twitter's official Card Validator was retired**. To verify, post the URL into a Tweet draft and check the preview. Use [share-preview.com](https://share-preview.com) or similar third-party previewers for non-destructive testing.
+- **Twitter's official Card Validator was retired**. To verify, post the URL into a Tweet draft and check the preview, or use a third-party OG/Twitter Card previewer for non-destructive testing.
 - `twitter:image:alt` is part of Twitter's spec — include it for accessibility (screen readers on x.com use it). Max 420 chars.
 
 ### `twitter:site` vs `twitter:creator`
@@ -531,7 +531,7 @@ This is a classic **entity disambiguation** problem. The fix is structural, not 
 
 ### Above-the-fold / LCP image
 
-- **Always `<img>`**, never `background-image` CSS — Phaser canvas excluded. This is the most common LCP killer we hit ([see lighthouse skill](../lighthouse/SKILL.md)).
+- **Always `<img>`**, never `background-image` CSS — Phaser canvas excluded. This is the most common LCP killer we hit (see the lighthouse skill).
 - Set explicit `width` and `height` attributes (prevents CLS).
 - Set `fetchPriority="high"` on the single LCP image; **don't** set it on multiple images per page (priority signal gets diluted).
 - Set `loading="eager"` (the default for in-viewport images; setting `loading="lazy"` on the LCP image is a documented anti-pattern).
@@ -829,7 +829,7 @@ Run through this before declaring a page "SEO done":
 
 - [Rich Results Test](https://search.google.com/test/rich-results) — primary structured data validator
 - [Schema Markup Validator](https://validator.schema.org/) — full schema.org validator (Google's RRT only covers Google-supported subset)
-- [share-preview.com](https://share-preview.com) — OG / Twitter Card preview (since X retired theirs)
+- Third-party OG / Twitter Card preview tools (since X retired theirs)
 - Facebook Sharing Debugger — `https://developers.facebook.com/tools/debug/`
 - [Google Search Console](https://search.google.com/search-console) — coverage, CWV, hreflang errors
 - `task lighthouse` — local CWV audit (this repo)
