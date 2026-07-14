@@ -18,7 +18,7 @@ Almost everything here is ✅ safe; the app rebuilds it on next launch (first la
 | `Caches/electron`, `Caches/node-gyp` | Electron & native-build download caches | ✅ |
 | `Caches/typescript` | TS compiler cache | ✅ |
 | `Caches/Homebrew` | Homebrew download cache | ✅ (`brew cleanup`) |
-| `Caches/Google`, `Caches/Mozilla`, `Caches/Firefox` | Browser HTTP caches | ✅ (may log you out of nothing; history stays) |
+| `Caches/Google`, `Caches/Mozilla`, `Caches/Firefox` | Browser HTTP caches | ✅ (won't log you out — cookies/history live in the profile, not here) |
 | `Caches/com.apple.*` | OS caches | ✅ but let macOS manage most; low payoff |
 | `Caches/*.ShipIt`, `Caches/*SoftwareUpdate` | App self-updater leftovers | ✅ |
 

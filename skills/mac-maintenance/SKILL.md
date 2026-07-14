@@ -109,6 +109,8 @@ Don't guess "unused". Rank by last-opened date, then let the user choose:
 mdls -name kMDItemLastUsedDate -name kMDItemDisplayName /Applications/*.app 2>/dev/null
 ```
 
+`kMDItemLastUsedDate = (null)` means Spotlight has no recorded launch — treat it as "possibly unused", not as proof (system apps and apps launched by other means also show null).
+
 For Homebrew casks/formulae, `brew uninstall <name>` then `brew autoremove` to drop orphaned deps. Never remove an app you can't attribute to the user (bundled/system/managed apps).
 
 ## Managed machines — do not disable
