@@ -11,6 +11,7 @@ A curated collection of AI agent skills for software development — compatible 
 | **[pixellab](skills/pixellab/)** | Generate pixel art assets using PixelLab MCP — Wang tilesets, characters, map objects |
 | **[code-review](skills/code-review/)** | Sandwich-structured code reviews — motivating, clear, separates blockers from nitpicks |
 | **[jira](skills/jira/)** | Post code review verdicts to Jira issues, flag blockers, suggest workflow transitions |
+| **[mac-maintenance](skills/mac-maintenance/)** | Safe, scan-first macOS maintenance — inventory disk/updates/caches read-only, report reclaimable space, then clean only what you approve |
 
 Each skill includes detailed reference material covering common pitfalls, anti-patterns, and production-ready code patterns.
 
