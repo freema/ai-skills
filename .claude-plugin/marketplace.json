@@ -57,6 +57,19 @@
       "license": "MIT",
       "keywords": ["pixellab", "pixel-art", "animation", "ui-generation", "sprite-editing", "game-assets"],
       "category": "development"
+    },
+    {
+      "name": "mac-maintenance",
+      "source": "./skills/mac-maintenance",
+      "description": "Safe, scan-first macOS maintenance — inventory disk/updates/caches read-only, report reclaimable space, then clean/upgrade only what the user approves.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["macos", "maintenance", "cleanup", "disk-space", "homebrew", "updates"],
+      "category": "system"
     }
   ]
 }

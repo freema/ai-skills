@@ -27,6 +27,11 @@
       "name": "pixellab-api",
       "source": "./skills/pixellab-api",
       "description": "PixelLab API v2 direct access — animate sprites, generate UI elements, edit pixel art, rotate/resize, style matching."
+    },
+    {
+      "name": "mac-maintenance",
+      "source": "./skills/mac-maintenance",
+      "description": "Safe, scan-first macOS maintenance — inventory disk/updates/caches read-only, report reclaimable space, then clean/upgrade only what the user approves."
     }
   ]
 }
