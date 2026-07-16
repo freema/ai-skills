@@ -1,0 +1,102 @@
+<title>REPORT TITLE — as of YYYY-MM-DD</title>
+<style>
+:root {
+  --paper: #FBFAF7; --ink: #22242A; --muted: #6B7280; --line: #E4E2DB;
+  --surface: #F2F0EA; --accent: #2456A6; --warn-bg: #FDF3E0; --warn-fg: #92580A;
+  --crit-bg: #FBE9EC; --crit-fg: #A50F27; --ok-fg: #1A7F4B;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --paper: #17181C; --ink: #E7E5E0; --muted: #9AA0AB; --line: #2E3037;
+  --surface: #1F2126; --accent: #6FA3F0; --warn-bg: #322610; --warn-fg: #E4A64C;
+  --crit-bg: #35171C; --crit-fg: #F2778A; --ok-fg: #55B583;
+} }
+:root[data-theme="light"] {
+  --paper: #FBFAF7; --ink: #22242A; --muted: #6B7280; --line: #E4E2DB;
+  --surface: #F2F0EA; --accent: #2456A6; --warn-bg: #FDF3E0; --warn-fg: #92580A;
+  --crit-bg: #FBE9EC; --crit-fg: #A50F27; --ok-fg: #1A7F4B;
+}
+:root[data-theme="dark"] {
+  --paper: #17181C; --ink: #E7E5E0; --muted: #9AA0AB; --line: #2E3037;
+  --surface: #1F2126; --accent: #6FA3F0; --warn-bg: #322610; --warn-fg: #E4A64C;
+  --crit-bg: #35171C; --crit-fg: #F2778A; --ok-fg: #55B583;
+}
+body { background: var(--paper); color: var(--ink);
+  font: 15px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif;
+  margin: 0; padding: 40px 24px 80px; }
+main { max-width: 1160px; margin: 0 auto; }
+header { border-bottom: 3px solid var(--accent); padding-bottom: 20px; margin-bottom: 24px; }
+.eyebrow { text-transform: uppercase; letter-spacing: .09em; font-size: 12px;
+  color: var(--accent); font-weight: 600; margin: 0 0 6px; }
+h1 { font-size: 27px; line-height: 1.2; margin: 0 0 10px; letter-spacing: -.015em; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 68ch; margin: 0; }
+.stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 26px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+  padding: 12px 16px; min-width: 200px; flex: 1; }
+.stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.stat span { font-size: 12.5px; color: var(--muted); }
+.stat--crit b { color: var(--crit-fg); }
+.stat--warn b { color: var(--warn-fg); }
+.stat--ok b { color: var(--ok-fg); }
+.note { background: var(--surface); border-left: 3px solid var(--accent); padding: 12px 16px;
+  border-radius: 0 6px 6px 0; margin: 0 0 26px; max-width: 78ch; }
+.note p { margin: 0 0 6px; } .note p:last-child { margin: 0; }
+h2 { font-size: 17px; margin: 34px 0 12px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 900px; }
+thead th { position: sticky; top: 0; background: var(--surface); text-align: left;
+  font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
+  padding: 10px 12px; border-bottom: 2px solid var(--line); white-space: nowrap; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: color-mix(in srgb, var(--surface) 55%, transparent); }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
+  max-width: 340px; overflow-wrap: anywhere; }
+.mono a { color: var(--ink); text-decoration-color: var(--muted); }
+.muted { color: var(--muted); }
+.pct { font-weight: 600; }
+.pct--warn { color: var(--warn-fg); }
+.pct--crit { color: var(--crit-fg); }
+.pct--ok { color: var(--ok-fg); }
+.chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: 999px; white-space: nowrap; margin: 1px 2px 1px 0; }
+.chip--warn { background: var(--warn-bg); color: var(--warn-fg); }
+.chip--crit { background: var(--crit-bg); color: var(--crit-fg); }
+footer { color: var(--muted); font-size: 12.5px; margin-top: 26px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+<main>
+<header>
+  <p class="eyebrow">AREA · SYSTEM · internal</p>
+  <h1>REPORT TITLE — as of YYYY-MM-DD</h1>
+  <p class="lede">One or two sentences: what the data is, where it comes from,
+  and what the reader should do with it. Data is aggregated — values and counts
+  only, no personal addresses.</p>
+</header>
+
+<div class="stats">
+  <div class="stat stat--warn"><b>15 365 / 76 944</b><span>headline number with a one-line explanation</span></div>
+  <div class="stat stat--crit"><b>100 %</b><span>critical finding</span></div>
+  <div class="stat stat--ok"><b>0</b><span>what is healthy</span></div>
+</div>
+
+<div class="note">
+  <p><strong>Key insight.</strong> The paragraph you would say out loud in a
+  meeting — root cause, what it is NOT caused by, what decision is needed.</p>
+</div>
+
+<h2>Detail</h2>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>Entity</th><th>Value</th><th class="num">Count</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td class="num">84</td><td>Regional edition A</td><td class="mono">sample value</td>
+<td class="num">746</td><td><span class="chip chip--warn">needs validation</span></td></tr>
+<tr><td class="num">155</td><td>National edition</td><td class="muted">—</td>
+<td class="num">36 085</td><td><span class="chip chip--crit">all empty</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<footer>Source: API/system name, collection method and date. Caveats and how to reproduce.</footer>
+</main>
