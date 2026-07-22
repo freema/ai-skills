@@ -70,6 +70,19 @@
       "license": "MIT",
       "keywords": ["macos", "maintenance", "cleanup", "disk-space", "homebrew", "updates"],
       "category": "system"
+    },
+    {
+      "name": "graylog-search",
+      "source": "./skills/graylog-search",
+      "description": "Search any Graylog instance via its REST API — token auth, universal search endpoints, Lucene DSL, stream scoping, level/timezone pitfalls, and findings published as a shareable HTML report artifact.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["graylog", "logs", "debugging", "incident-response", "gelf", "observability"],
+      "category": "development"
     }
   ]
 }

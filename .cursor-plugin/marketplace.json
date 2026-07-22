@@ -32,6 +32,11 @@
       "name": "mac-maintenance",
       "source": "./skills/mac-maintenance",
       "description": "Safe, scan-first macOS maintenance — inventory disk/updates/caches read-only, report reclaimable space, then clean/upgrade only what the user approves."
+    },
+    {
+      "name": "graylog-search",
+      "source": "./skills/graylog-search",
+      "description": "Search any Graylog instance via its REST API — token auth, universal search endpoints, Lucene DSL, stream scoping, level/timezone pitfalls, and findings published as a shareable HTML report artifact."
     }
   ]
 }

@@ -13,6 +13,7 @@ A curated collection of AI agent skills for software development — compatible 
 | **[jira](skills/jira/)** | Post code review verdicts to Jira issues, flag blockers, suggest workflow transitions |
 | **[mac-maintenance](skills/mac-maintenance/)** | Safe, scan-first macOS maintenance — inventory disk/updates/caches read-only, report reclaimable space, then clean only what you approve |
 | **[publish-report-artifact](skills/publish-report-artifact/)** | Publish analysis results as a polished, shareable web page (Claude Artifact) — report structure, PII rules for aggregated data, light/dark house style |
+| **[graylog-search](skills/graylog-search/)** | Search any Graylog instance via its REST API — token auth, Lucene DSL, stream scoping, level/timezone pitfalls, findings published as an HTML report artifact |
 
 Each skill includes detailed reference material covering common pitfalls, anti-patterns, and production-ready code patterns.
 
