@@ -83,6 +83,19 @@
       "license": "MIT",
       "keywords": ["graylog", "logs", "debugging", "incident-response", "gelf", "observability"],
       "category": "development"
+    },
+    {
+      "name": "product-hunt-launch",
+      "source": "./skills/product-hunt-launch",
+      "description": "Fill a Product Hunt launch form end-to-end via the chrome-devtools MCP — name, tagline, description, tags, thumbnail, gallery upload — then stop before publishing.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["product-hunt", "launch", "marketing", "browser-automation", "chrome-devtools-mcp"],
+      "category": "marketing"
     }
   ]
 }

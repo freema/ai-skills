@@ -14,6 +14,7 @@ A curated collection of AI agent skills for software development — compatible 
 | **[mac-maintenance](skills/mac-maintenance/)** | Safe, scan-first macOS maintenance — inventory disk/updates/caches read-only, report reclaimable space, then clean only what you approve |
 | **[publish-report-artifact](skills/publish-report-artifact/)** | Publish analysis results as a polished, shareable web page (Claude Artifact) — report structure, PII rules for aggregated data, light/dark house style |
 | **[graylog-search](skills/graylog-search/)** | Search any Graylog instance via its REST API — token auth, Lucene DSL, stream scoping, level/timezone pitfalls, findings published as an HTML report artifact |
+| **[product-hunt-launch](skills/product-hunt-launch/)** | Fill a Product Hunt launch form end-to-end via the chrome-devtools MCP (React-input & gallery-upload gotchas included) and stop before publishing |
 
 Each skill includes detailed reference material covering common pitfalls, anti-patterns, and production-ready code patterns.
 

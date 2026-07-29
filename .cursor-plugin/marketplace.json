@@ -37,6 +37,11 @@
       "name": "graylog-search",
       "source": "./skills/graylog-search",
       "description": "Search any Graylog instance via its REST API — token auth, universal search endpoints, Lucene DSL, stream scoping, level/timezone pitfalls, and findings published as a shareable HTML report artifact."
+    },
+    {
+      "name": "product-hunt-launch",
+      "source": "./skills/product-hunt-launch",
+      "description": "Fill a Product Hunt launch form end-to-end via the chrome-devtools MCP — name, tagline, description, tags, thumbnail, gallery upload — then stop before publishing."
     }
   ]
 }
