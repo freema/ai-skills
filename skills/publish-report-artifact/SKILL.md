@@ -10,6 +10,7 @@ description: >
   findings worth reading outside the terminal. Covers page structure, PII rules
   for aggregated data, a token-based house style with light/dark themes, and the
   publish/update workflow.
+disable-model-invocation: true
 ---
 
 # Publish a report as an Artifact
