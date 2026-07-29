@@ -15,6 +15,7 @@ A curated collection of AI agent skills for software development — compatible 
 | **[publish-report-artifact](skills/publish-report-artifact/)** | Publish analysis results as a polished, shareable web page (Claude Artifact) — report structure, PII rules for aggregated data, light/dark house style |
 | **[graylog-search](skills/graylog-search/)** | Search any Graylog instance via its REST API — token auth, Lucene DSL, stream scoping, level/timezone pitfalls, findings published as an HTML report artifact |
 | **[product-hunt-launch](skills/product-hunt-launch/)** | Fill a Product Hunt launch form end-to-end via the chrome-devtools MCP (React-input & gallery-upload gotchas included) and stop before publishing |
+| **[mysql-schema-design](skills/mysql-schema-design/)** | Design MySQL 8 schemas that enforce data integrity — naming, NULL/DEFAULT semantics, datetime rules, DECIMAL for money, FK actions, CHECK constraints, collations, index hygiene |
 
 Each skill includes detailed reference material covering common pitfalls, anti-patterns, and production-ready code patterns.
 

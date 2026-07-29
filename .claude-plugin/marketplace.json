@@ -96,6 +96,19 @@
       "license": "MIT",
       "keywords": ["product-hunt", "launch", "marketing", "browser-automation", "chrome-devtools-mcp"],
       "category": "marketing"
+    },
+    {
+      "name": "mysql-schema-design",
+      "source": "./skills/mysql-schema-design",
+      "description": "Design MySQL 8 schemas that enforce data integrity — naming, NOT NULL/DEFAULT semantics, datetime vs timestamp, DECIMAL for money, FK ON DELETE rules, CHECK constraints, collations, index hygiene.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["mysql", "database", "schema-design", "sql", "migrations", "data-integrity"],
+      "category": "development"
     }
   ]
 }

@@ -42,6 +42,11 @@
       "name": "product-hunt-launch",
       "source": "./skills/product-hunt-launch",
       "description": "Fill a Product Hunt launch form end-to-end via the chrome-devtools MCP — name, tagline, description, tags, thumbnail, gallery upload — then stop before publishing."
+    },
+    {
+      "name": "mysql-schema-design",
+      "source": "./skills/mysql-schema-design",
+      "description": "Design MySQL 8 schemas that enforce data integrity — naming, NOT NULL/DEFAULT semantics, datetime vs timestamp, DECIMAL for money, FK ON DELETE rules, CHECK constraints, collations, index hygiene."
     }
   ]
 }
