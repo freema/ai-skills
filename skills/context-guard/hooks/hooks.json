@@ -1,0 +1,17 @@
+{
+  "description": "context-guard: warn when the session transcript grows large enough to bloat every turn's upload",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/warn-context.sh",
+            "args": [],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

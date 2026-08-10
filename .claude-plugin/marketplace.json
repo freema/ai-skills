@@ -98,6 +98,19 @@
       "category": "marketing"
     },
     {
+      "name": "context-guard",
+      "source": "./skills/context-guard",
+      "description": "Diagnose Claude Code sessions that saturate your uplink — scan running sessions, separate bufferbloat from real hardware faults, and install a status line and warning hook that surface per-turn upload volume.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["context", "bandwidth", "network", "latency", "bufferbloat", "statusline", "monitoring"],
+      "category": "system"
+    },
+    {
       "name": "mysql-schema-design",
       "source": "./skills/mysql-schema-design",
       "description": "Design MySQL 8 schemas that enforce data integrity — naming, NOT NULL/DEFAULT semantics, datetime vs timestamp, DECIMAL for money, FK ON DELETE rules, CHECK constraints, collations, index hygiene.",
