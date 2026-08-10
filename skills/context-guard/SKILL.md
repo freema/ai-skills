@@ -26,15 +26,18 @@ like a broken router. There is no built-in bandwidth readout and no metered mode
    "${CLAUDE_PLUGIN_ROOT}/scripts/scan-sessions.sh"
    ```
 
-   Flag any session uploading above ~200 KB/s or carrying a transcript over
-   ~5 MB. Note its PID, uptime and directory.
+   Flag any session uploading above ~200 KB/s or whose newest log is over
+   ~5 MB. Note its PID, uptime, directory and the SESSION column — that value
+   is the id `claude --resume` takes. Sessions sharing a directory share the
+   NEWEST-LOG figure, so treat it as the directory's worst case, not the PID's.
 
 2. Confirm the mechanism before blaming a session. Compare latency **to** the
    router against latency **past** it:
 
    ```bash
    GW=$(route -n get default 2>/dev/null | awk '/gateway/ {print $NF}')
-   ping -c 20 -i 0.3 "$GW"
+   [ -n "$GW" ] || GW=$(ip route show default 2>/dev/null | awk '{print $3; exit}')
+   [ -n "$GW" ] && ping -c 20 -i 0.3 "$GW" || echo "no default gateway found — skip the router comparison"
    ping -c 20 -i 0.3 1.1.1.1
    ```
 
@@ -50,16 +53,19 @@ like a broken router. There is no built-in bandwidth readout and no metered mode
 
 3. Report what was measured, then recommend in this order:
    - `/compact` in the offending session — collapses context, keeps the thread
-   - end and resume — `kill <pid>`, then `claude --resume <session-id>`. Use
-     plain `kill`; `kill -9` can cost the tail of the transcript, which is
-     exactly what the user wanted to keep
+   - end and resume — `kill <pid>`, then `claude --resume <session-id>`, where
+     the session id is the SESSION column from the scan (it is the transcript's
+     filename). Use plain `kill`; `kill -9` can cost the tail of the
+     transcript, which is exactly what the user wanted to keep
    - start fresh for unrelated work instead of extending a days-old session
 
 ## Install the always-on parts
 
 The warning hook ships with this skill and runs automatically once the plugin is
-installed: it fires on each prompt and speaks up every time the transcript
-crosses another 5 MB step.
+installed: it fires on each prompt and speaks up every time the content
+accumulated since the session's last compaction crosses another 5 MB step —
+measuring from the last compact marker, not raw file size, so `/compact`
+actually silences it until the context regrows.
 
 The status line needs one manual step — a plugin cannot set the top-level
 `statusLine` key, because Claude Code accepts only `agent` and
@@ -69,8 +75,11 @@ path, and the configuration variables.
 
 ## Interpreting the numbers
 
-- **Transcript size is the reliable signal.** It is measured from disk and is
-  re-uploaded in full on every turn.
+- **What is re-uploaded every turn is the live context**, not the transcript
+  file. The `.jsonl` on disk is an append-only log — `/compact` writes a
+  summary record and the file keeps growing — so its size is an upper bound
+  that overstates a compacted session. The hook measures content since the
+  last compact marker; the status line reads live token counts.
 - **Upload/s is a short sample and is bursty.** A session reading 0 B/s between
   turns can still spike to hundreds of KB/s during one. Never conclude a session
   is idle from a single sample.
@@ -82,8 +91,10 @@ path, and the configuration variables.
 
 - `scan-sessions.sh` reads only. Never kill a session without explicit
   confirmation — the user may have work in progress.
-- `nettop` and `lsof` are macOS-only. On Linux the scan degrades to transcript
-  sizes; say so rather than reporting missing rates as zero.
+- `nettop` and `lsof` are macOS-only. On Linux the scan prints `n/a` in the
+  UPLOAD/S column and falls back to log sizes; report it that way rather than
+  as zero. The gateway lookup in step 2 covers both `route` (macOS) and
+  `ip route` (Linux).
 - Do not send the user to their ISP on the strength of a latency reading alone.
   If ping to their own router is healthy, the line and the router are working,
   and a support call will measure a clean line and close the ticket.
