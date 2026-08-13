@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deck Title — one line that sells the talk</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+/* ============================================================
+   Slide deck design system — dark tech-editorial
+   Self-contained: no external JS/CSS; fonts load from Google
+   Fonts when online but degrade to system fallbacks offline.
+   Pick ONE accent color per deck and change only --accent.
+   ============================================================ */
+
+:root {
+  /* surfaces */
+  --bg:      #0A0C11;
+  --bg-1:    #11141B;
+  --bg-2:    #161A22;
+  --term:    #0D1016;
+  --term-bar:#181C25;
+  --line:    rgba(255,255,255,0.08);
+  --line-2:  rgba(255,255,255,0.15);
+
+  /* ink */
+  --text:    #E9EBEF;
+  --dim:     #9AA1AE;
+  --faint:   #5A626F;
+
+  /* accent — the ONLY token you change per deck */
+  --accent:  #4AA8FF;
+  --accent-ink: #041019;
+  --accent-text: var(--accent);
+  --soft:    color-mix(in srgb, var(--accent) 14%, transparent);
+  --soft-2:  color-mix(in srgb, var(--accent) 22%, transparent);
+  --hair:    color-mix(in srgb, var(--accent) 40%, transparent);
+
+  /* code semantics */
+  --ok:   #5FD08A;
+  --warn: #F2B53D;
+  --err:  #F2685A;
+  --key:  #6FB2F2;
+  --str:  #9FE0B0;
+  --num:  #F2B53D;
+  --kw:   #C79BFF;
+
+  --fd: 'Space Grotesk', system-ui, sans-serif;      /* display */
+  --fb: 'Hanken Grotesk', system-ui, sans-serif;     /* body */
+  --fm: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+
+/* ---------- deck shell + scaling ---------- */
+#deck { position: fixed; inset: 0; background: #000; }
+#stage {
+  position: absolute; left: 50%; top: 50%;
+  width: 1920px; height: 1080px;
+  transform-origin: center center;
+}
+#bar {
+  position: fixed; left: 0; bottom: 0; height: 4px; width: 0;
+  background: var(--accent);
+  box-shadow: 0 0 14px var(--accent);
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+  z-index: 20;
+}
+#hint {
+  position: fixed; right: 18px; bottom: 16px; z-index: 20;
+  font-family: var(--fm); font-size: 13px; letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.28);
+  transition: opacity .6s ease; pointer-events: none;
+}
+:root[data-theme="light"] #hint { color: rgba(0,0,0,0.3); }
+
+/* ---------- slide frame ---------- */
+.slide {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  background:
+    radial-gradient(120% 90% at 88% -10%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--fb);
+  padding: 88px 104px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  opacity: 0;
+  transform: translateX(48px);
+  transition: opacity .5s ease, transform .5s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+  z-index: 1;
+}
+.slide.active { opacity: 1; transform: none; pointer-events: auto; z-index: 2; }
+.slide.prev  { transform: translateX(-48px); }
+
+/* slide chrome: kicker (section label) left, auto slide counter right */
+.chrome { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 30px; }
+.kicker {
+  font-family: var(--fm); font-size: 22px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-text);
+  display: flex; align-items: center; gap: 14px;
+}
+.kicker::before { content: ""; width: 9px; height: 9px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 4px var(--soft); }
+.idx { font-family: var(--fm); font-size: 22px; font-weight: 500; color: var(--faint); letter-spacing: 0.04em; }
+.idx b { color: var(--text); font-weight: 600; }
+
+/* headings */
+.h1 { font-family: var(--fd); font-weight: 600; font-size: 60px; line-height: 1.02; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.h2 { font-family: var(--fd); font-weight: 600; font-size: 46px; line-height: 1.08; letter-spacing: -0.01em; margin: 0; }
+.h2 .sub { font-family: var(--fb); font-weight: 500; font-size: 24px; color: var(--dim); }
+.lead { font-size: 28px; line-height: 1.45; color: var(--dim); max-width: 34ch; text-wrap: pretty; }
+.body { flex: 1; min-height: 0; display: flex; }
+
+.ac { color: var(--accent-text); }
+.mono { font-family: var(--fm); }
+.tool {
+  font-family: var(--fm); font-size: 0.92em; font-weight: 500; color: var(--text);
+  background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 7px;
+  padding: 3px 10px; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;
+}
+.tool::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; }
+
+/* footer wordmark — same on every slide */
+.foot {
+  position: absolute; left: 104px; bottom: 46px;
+  font-family: var(--fm); font-size: 15px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--faint);
+}
+
+/* ---------- terminal window ---------- */
+.term { background: var(--term); border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 24px 60px -28px rgba(0,0,0,0.8); display: flex; flex-direction: column; }
+.term-bar { display: flex; align-items: center; gap: 14px; padding: 13px 18px; background: var(--term-bar); border-bottom: 1px solid var(--line); flex: none; }
+.dots { display: flex; gap: 8px; }
+.dots i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.dots i:nth-child(1){ background:#ff5f57; } .dots i:nth-child(2){ background:#febc2e; } .dots i:nth-child(3){ background:#28c840; }
+.term-title { font-family: var(--fm); font-size: 17px; color: var(--dim); letter-spacing: 0.01em; }
+.term-tag { margin-left: auto; font-family: var(--fm); font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+.term pre { margin: 0; padding: 24px 26px; font-family: var(--fm); font-size: 21px; line-height: 1.66; color: var(--text); overflow: auto; tab-size: 2; flex: 1; }
+.cmd { color: var(--accent-text); font-weight: 600; }
+.ok { color: var(--ok); } .wn { color: var(--warn); } .er { color: var(--err); }
+.c { color: var(--faint); font-style: italic; }
+
+/* ---------- callouts / pills ---------- */
+.callout { border-left: 3px solid var(--accent); background: var(--soft); border-radius: 0 12px 12px 0; padding: 22px 28px; font-size: 27px; line-height: 1.4; color: var(--text); }
+.callout .lbl { font-family: var(--fm); font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-text); display: block; margin-bottom: 8px; }
+.callout b { color: var(--accent-text); font-weight: 700; }
+.warnbox { border-left: 3px solid var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.warnbox .lbl { color: var(--warn); }
+.warnbox b { color: var(--warn); }
+.pill { font-family: var(--fm); font-size: 17px; font-weight: 500; letter-spacing: 0.03em; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--dim); background: var(--bg-1); display: inline-flex; align-items: center; gap: 9px; }
+.pill b { color: var(--text); font-weight: 600; }
+
+/* bullets */
+ul.b { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 22px; }
+ul.b li { font-size: 28px; line-height: 1.38; color: var(--dim); padding-left: 38px; position: relative; text-wrap: pretty; }
+ul.b li::before { content: "▸"; position: absolute; left: 0; top: 0; color: var(--accent-text); }
+ul.b li b, ul.b li strong { color: var(--text); font-weight: 600; }
+ul.b li .ac { color: var(--accent-text); font-weight: 600; }
+
+/* generic layout helpers */
+.row { display: flex; gap: 28px; }
+.col { display: flex; flex-direction: column; }
+.gap-s { gap: 14px; } .gap-m { gap: 22px; } .gap-l { gap: 36px; }
+.grow { flex: 1; min-height: 0; }
+.center { align-items: center; } .between { justify-content: space-between; } .jc { justify-content: center; }
+
+/* ---------- nodes / flow diagram ---------- */
+.node { border: 1px solid var(--line-2); background: var(--bg-1); border-radius: 12px; padding: 16px 22px; font-family: var(--fm); font-size: 21px; color: var(--text); display: flex; flex-direction: column; gap: 4px; text-align: center; align-items: center; }
+.node .nt { font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+.node.hub { border-color: var(--hair); background: var(--soft); box-shadow: 0 0 0 1px var(--hair) inset; }
+.node.hub .nt { color: var(--accent-text); }
+.arrow { color: var(--accent-text); font-family: var(--fm); font-size: 30px; display: flex; align-items: center; justify-content: center; }
+
+/* ---------- title hero ---------- */
+.hero { display: grid; grid-template-columns: 1.3fr 0.85fr; gap: 64px; flex: 1; align-items: center; }
+.wordmark { font-family: var(--fd); font-weight: 700; font-size: 118px; line-height: 0.92; letter-spacing: -0.04em; margin: 0; }
+.wordmark .ac { color: var(--accent-text); }
+.hero-sub { font-size: 38px; color: var(--text); margin: 30px 0 0; max-width: 20ch; line-height: 1.18; font-weight: 500; }
+.hero-lead { font-size: 25px; color: var(--dim); margin: 18px 0 0; max-width: 32ch; line-height: 1.4; }
+.meta { display: flex; gap: 22px; align-items: center; margin-top: 46px; font-family: var(--fm); font-size: 21px; color: var(--faint); flex-wrap: wrap; }
+.meta b { color: var(--text); font-weight: 600; }
+.meta .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--faint); }
+.hero-stack { display: flex; flex-direction: column; gap: 11px; }
+.hero-stack .lab { font-family: var(--fm); font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+.hero-stack .arrow { font-size: 22px; }
+
+/* ---------- two-column compare ---------- */
+.cmp2 { display: grid; grid-template-columns: 1fr auto 1fr; gap: 30px; align-items: stretch; width: 100%; }
+.card { border: 1px solid var(--line-2); border-radius: 16px; background: var(--bg-1); padding: 32px 34px; display: flex; flex-direction: column; gap: 16px; }
+.card.hl { border-color: var(--hair); background: var(--soft); box-shadow: 0 0 0 1px var(--hair) inset; }
+.card .ct { font-family: var(--fm); font-size: 17px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+.card.hl .ct { color: var(--accent-text); }
+.card .cm { font-size: 30px; line-height: 1.32; color: var(--dim); }
+.card .cm b { color: var(--text); font-weight: 600; }
+.card.hl .cm b { color: var(--accent-text); }
+.card .sub { font-family: var(--fm); font-size: 18px; color: var(--faint); margin-top: auto; }
+.vsarrow { display: flex; align-items: center; justify-content: center; font-family: var(--fm); font-size: 40px; color: var(--accent-text); }
+
+/* ---------- big stats ---------- */
+.stats4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; width: 100%; }
+.stat { border: 1px solid var(--line-2); border-radius: 16px; background: var(--bg-1); padding: 28px 30px; display: flex; flex-direction: column; gap: 10px; }
+.stat .big { font-family: var(--fd); font-weight: 700; font-size: 58px; line-height: 0.95; color: var(--accent-text); letter-spacing: -0.02em; }
+.stat .lab { font-size: 21px; line-height: 1.3; color: var(--dim); }
+.stat .lab b { color: var(--text); font-weight: 600; }
+
+/* ---------- screenshot / video frame ---------- */
+.shot { display: inline-block; border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden; box-shadow: 0 24px 60px -28px rgba(0,0,0,0.85); line-height: 0; background: #0D1016; }
+.shot img, .shot video { display: block; max-width: 100%; max-height: 520px; width: auto; height: auto; }
+.vids { display: flex; gap: 24px; width: 100%; justify-content: center; }
+.vidbox { display: flex; flex-direction: column; gap: 10px; align-items: center; min-width: 0; }
+.vidbox video { display: block; width: 100%; height: auto; border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 24px 60px -28px rgba(0,0,0,0.85); background: #0D1016; }
+.vidbox .vc { font-family: var(--fm); font-size: 15px; letter-spacing: 0.08em; color: var(--faint); }
+.vidbox .vc b { color: var(--accent-text); font-weight: 600; }
+
+/* ---------- numbered feature cards ---------- */
+.ucs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; width: 100%; }
+.uc { border: 1px solid var(--line-2); border-radius: 14px; background: var(--bg-1); padding: 24px 26px; display: flex; flex-direction: column; gap: 12px; }
+.uc .un { width: 38px; height: 38px; border-radius: 50%; background: var(--bg-2); border: 1px solid var(--line-2); color: var(--accent-text); font-family: var(--fm); font-weight: 700; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+.uc h3 { font-family: var(--fd); font-size: 26px; margin: 0; color: var(--text); }
+.uc p { margin: 0; font-size: 19px; line-height: 1.35; color: var(--dim); }
+.uc .tl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.uc .tl .tool { font-size: 14px; padding: 3px 9px; }
+
+/* ---------- takeaways ---------- */
+.takes { display: flex; flex-direction: column; gap: 22px; width: 100%; }
+.take { display: flex; gap: 22px; align-items: flex-start; border-left: 3px solid var(--hair); padding: 6px 0 6px 26px; }
+.take .tn { font-family: var(--fm); font-weight: 700; font-size: 24px; color: var(--accent-text); flex: none; padding-top: 4px; }
+.take .tt { font-size: 31px; line-height: 1.3; color: var(--text); font-weight: 500; }
+.take .tt b { color: var(--accent-text); font-weight: 700; }
+
+/* ---------- q&a link cards ---------- */
+.links { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 40px; width: 100%; max-width: 1100px; }
+.lk { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line-2); border-radius: 12px; padding: 22px 26px; background: var(--bg-1); }
+.lk .ll { font-family: var(--fm); font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+.lk .lv { font-family: var(--fm); font-size: 23px; color: var(--accent-text); }
+
+/* ============ light theme (toggled with T) ============ */
+:root[data-theme="light"] {
+  --bg: #F5F7FA; --bg-1: #FFFFFF; --bg-2: #ECEFF3; --term: #FBFCFD; --term-bar:#EAEEF3;
+  --line: rgba(16,22,34,0.10); --line-2: rgba(16,22,34,0.16);
+  --text: #13161C; --dim: #45505F; --faint: #8B94A2;
+  --accent-text: color-mix(in srgb, var(--accent) 58%, #06253f);
+  --ok: #1A7F37; --warn: #9A6700; --err: #CF222E; --key: #0550AE; --str: #0A7F3E; --num: #9A6700; --kw: #8250DF;
+}
+</style>
+</head>
+<body>
+<div id="deck">
+  <div id="stage">
+
+    <!-- ================= SLIDE 1 — TITLE ================= -->
+    <section class="slide" data-label="Title">
+      <div class="chrome">
+        <span class="kicker">Event · Audience</span>
+        <span class="idx">01 · 01 · 2026</span>
+      </div>
+      <div class="hero">
+        <div>
+          <h1 class="wordmark">Project <span class="ac">Name</span></h1>
+          <p class="hero-sub">One sentence that sells the talk</p>
+          <p class="hero-lead">A supporting line with context — what this is, why the audience should care.</p>
+          <div class="meta">
+            <span><b>Speaker Name</b></span>
+            <span class="dot"></span>
+            <span>~30 min + demo</span>
+          </div>
+        </div>
+        <div class="hero-stack">
+          <div class="lab">Optional mini-diagram of the system</div>
+          <div class="node"><span class="nt">Clients</span>Who or what talks to it</div>
+          <div class="arrow">│</div>
+          <div class="node hub"><span class="nt">Your system</span>The thing this talk is about</div>
+          <div class="arrow">│</div>
+          <div class="node"><span class="nt">Sources</span>What it builds on</div>
+        </div>
+      </div>
+      <div class="foot">Project Name · project.example.com</div>
+    </section>
+    <!--
+      WHAT TO SAY (slide 1):
+      Welcome; one sentence on what the talk covers and what the audience walks away with.
+      Speaker notes live in HTML comments right below each slide — they never render,
+      and they keep the narrative next to the content it belongs to.
+    -->
+
+    <!-- ================= SLIDE 2 — CONTEXT / BULLETS ================= -->
+    <section class="slide" data-label="Context">
+      <div class="chrome"><span class="kicker">01 — Context</span><span class="idx"></span></div>
+      <h2 class="h2">Why this exists <span class="sub">· the problem in one slide</span></h2>
+      <div class="body col gap-l" style="margin-top:40px; justify-content:center;">
+        <ul class="b" style="max-width:1350px;">
+          <li><b>State the problem</b> in the audience's terms — what hurts today, with a concrete example.</li>
+          <li>Use <span class="ac">accented phrases</span> for the terms you want the room to remember.</li>
+          <li>Three to five bullets maximum — if you need more, it is two slides.</li>
+        </ul>
+        <div class="callout" style="max-width:1350px;">
+          <span class="lbl">Key point</span>
+          One sentence the audience should repeat to a colleague tomorrow. <b>Bold the core of it.</b>
+        </div>
+      </div>
+      <div class="foot">Project Name · project.example.com</div>
+    </section>
+    <!--
+      WHAT TO SAY (slide 2):
+      Expand each bullet in one or two sentences. Anticipated question: note it here
+      with the answer, so future-you remembers it before the talk.
+    -->
+
+    <!-- ================= SLIDE 3 — BEFORE / AFTER ================= -->
+    <section class="slide" data-label="Before / After">
+      <div class="chrome"><span class="kicker">02 — The change</span><span class="idx"></span></div>
+      <h2 class="h2">Before and after</h2>
+      <div class="body col gap-l" style="margin-top:40px; justify-content:center;">
+        <div class="cmp2">
+          <div class="card">
+            <span class="ct">Before</span>
+            <div class="cm">How it worked previously — keep it <b>honest</b>, not a strawman.</div>
+            <span class="sub">old.example.com · deprecated</span>
+          </div>
+          <div class="vsarrow">→</div>
+          <div class="card hl">
+            <span class="ct">After</span>
+            <div class="cm">What changed and the <b>one property</b> that makes it better.</div>
+            <span class="sub">new.example.com · production</span>
+          </div>
+        </div>
+        <ul class="b" style="max-width:1350px;">
+          <li>Follow the cards with two or three bullets on <b>why</b> the change was made.</li>
+          <li>Real numbers beat adjectives — "<span class="ac">1 100+ calls a day</span>" lands better than "high traffic".</li>
+        </ul>
+      </div>
+      <div class="foot">Project Name · project.example.com</div>
+    </section>
+
+    <!-- ================= SLIDE 4 — TERMINAL DEMO ================= -->
+    <section class="slide" data-label="Demo">
+      <div class="chrome"><span class="kicker">03 — In practice</span><span class="idx"></span></div>
+      <h2 class="h2">What it looks like <span class="sub">· real session, trimmed</span></h2>
+      <div class="body col gap-m" style="margin-top:36px; justify-content:center;">
+        <div class="term" style="max-width:1500px; align-self:center; width:100%;">
+          <div class="term-bar">
+            <div class="dots"><i></i><i></i><i></i></div>
+            <span class="term-title">user@laptop — session</span>
+            <span class="term-tag">live demo</span>
+          </div>
+          <pre><span class="cmd">$ your-tool run --example</span>
+<span class="c"># paste REAL output here, trimmed to the interesting lines</span>
+<span class="ok">✓ step one completed</span>
+<span class="ok">✓ step two completed</span>
+<span class="wn">! a warning worth talking about</span>
+result: <span class="ac">the number or line the audience should look at</span></pre>
+        </div>
+      </div>
+      <div class="foot">Project Name · project.example.com</div>
+    </section>
+    <!--
+      WHAT TO SAY (slide 4):
+      Walk through the output top to bottom. If a live demo follows, this slide is the
+      fallback when the demo gods are unkind.
+    -->
+
+    <!-- ================= SLIDE 5 — NUMBERS ================= -->
+    <section class="slide" data-label="Numbers">
+      <div class="chrome"><span class="kicker">04 — Numbers</span><span class="idx"></span></div>
+      <h2 class="h2">The numbers that matter</h2>
+      <div class="body col gap-l" style="margin-top:48px; justify-content:center;">
+        <div class="stats4">
+          <div class="stat"><span class="big">42</span><span class="lab"><b>things</b> the headline number counts</span></div>
+          <div class="stat"><span class="big">1 100+</span><span class="lab"><b>events a day</b> — usage, not vanity</span></div>
+          <div class="stat"><span class="big">6</span><span class="lab"><b>systems</b> connected under one roof</span></div>
+          <div class="stat"><span class="big">0</span><span class="lab"><b>incidents</b> — the number you are proud of</span></div>
+        </div>
+        <div class="callout warnbox" style="max-width:1350px;">
+          <span class="lbl">Caveat</span>
+          Numbers need a source and a date. <b>Stale or unsourced numbers cost you the room.</b>
+        </div>
+      </div>
+      <div class="foot">Project Name · project.example.com</div>
+    </section>
+
+    <!-- ================= SLIDE 6 — TAKEAWAYS ================= -->
+    <section class="slide" data-label="Takeaways">
+      <div class="chrome"><span class="kicker">05 — Takeaways</span><span class="idx"></span></div>
+      <h2 class="h2">If you remember three things</h2>
+      <div class="body col" style="margin-top:56px; justify-content:center;">
+        <div class="takes" style="max-width:1400px;">
+          <div class="take"><span class="tn">01</span><span class="tt">First takeaway — a full sentence with the <b>key term</b> bolded.</span></div>
+          <div class="take"><span class="tn">02</span><span class="tt">Second takeaway — what the audience can <b>do tomorrow</b>.</span></div>
+          <div class="take"><span class="tn">03</span><span class="tt">Third takeaway — where this is <b>going next</b>.</span></div>
+        </div>
+      </div>
+      <div class="foot">Project Name · project.example.com</div>
+    </section>
+
+    <!-- ================= SLIDE 7 — Q&A / LINKS ================= -->
+    <section class="slide" data-label="Q&A">
+      <div class="chrome"><span class="kicker">06 — Q&amp;A</span><span class="idx"></span></div>
+      <h2 class="h2">Questions <span class="sub">· links to keep</span></h2>
+      <div class="body col gap-l" style="margin-top:48px; justify-content:center; align-items:center;">
+        <div class="links">
+          <div class="lk"><span class="ll">Docs</span><span class="lv">docs.example.com</span></div>
+          <div class="lk"><span class="ll">Source</span><span class="lv">github.com/org/repo</span></div>
+          <div class="lk"><span class="ll">Contact</span><span class="lv">you@example.com</span></div>
+          <div class="lk"><span class="ll">This deck</span><span class="lv">slides.example.com</span></div>
+        </div>
+      </div>
+      <div class="foot">Project Name · project.example.com</div>
+    </section>
+    <!--
+      WHAT TO SAY (slide 7):
+      Park likely questions here with prepared answers:
+      - "how much does it cost?" → …
+      - "does it work with X?" → …
+    -->
+
+  </div>
+  <div id="bar"></div>
+  <div id="hint">← →&nbsp;&nbsp;slides&nbsp;&nbsp;·&nbsp;&nbsp;T theme&nbsp;&nbsp;·&nbsp;&nbsp;F fullscreen</div>
+</div>
+
+<script>
+(function () {
+  var stage  = document.getElementById('stage');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var bar    = document.getElementById('bar');
+  var hint   = document.getElementById('hint');
+  var total  = slides.length;
+  var i = 0;
+  var hintTimer;
+
+  // Auto-number slides from DOM position (".idx" counter + number prefix in the
+  // ".kicker") so inserting or reordering slides never needs manual renumbering.
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  slides.forEach(function (sl, k) {
+    if (k === 0) return; // title slide shows the date, not a counter
+    var idxEl = sl.querySelector('.idx');
+    if (idxEl) idxEl.innerHTML = '<b>' + pad(k + 1) + '</b> / ' + total;
+    var kik = sl.querySelector('.kicker');
+    if (kik) kik.textContent = kik.textContent.replace(/^\s*\d+\s*[—-]\s*/, pad(k) + ' — ');
+  });
+
+  // scale the fixed 1920×1080 stage to fit any viewport
+  function fit() {
+    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit);
+
+  function render() {
+    for (var k = 0; k < total; k++) {
+      slides[k].classList.toggle('active', k === i);
+      slides[k].classList.toggle('prev', k < i);
+      // pause any videos on slides that are no longer visible
+      if (k !== i) {
+        var vids = slides[k].querySelectorAll('video');
+        for (var v = 0; v < vids.length; v++) vids[v].pause();
+      }
+    }
+    bar.style.width = ((i + 1) / total * 100) + '%';
+    if (location.hash !== '#' + (i + 1)) {
+      try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) {}
+    }
+  }
+  function go(n) { i = Math.max(0, Math.min(total - 1, n)); render(); }
+  function next() { go(i + 1); }
+  function prev() { go(i - 1); }
+
+  function flashHint() {
+    hint.style.opacity = '1';
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(function () { hint.style.opacity = '0'; }, 2600);
+  }
+
+  // theme toggle (persisted; safe on file:// where localStorage may throw)
+  function applyTheme(t) {
+    if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    else document.documentElement.removeAttribute('data-theme');
+  }
+  var saved = null;
+  try { saved = localStorage.getItem('deck-theme'); } catch (e) {}
+  if (saved) applyTheme(saved);
+  function toggleTheme() {
+    var light = document.documentElement.getAttribute('data-theme') === 'light';
+    var nextTheme = light ? 'dark' : 'light';
+    applyTheme(nextTheme);
+    try { localStorage.setItem('deck-theme', nextTheme); } catch (e) {}
+  }
+
+  function toggleFs() {
+    if (!document.fullscreenElement) {
+      (document.documentElement.requestFullscreen || function () {}).call(document.documentElement);
+    } else {
+      (document.exitFullscreen || function () {}).call(document);
+    }
+  }
+
+  window.addEventListener('keydown', function (e) {
+    var k = e.key;
+    if (k === 'ArrowRight' || k === ' ' || k === 'PageDown' || k === 'Spacebar') { e.preventDefault(); next(); flashHint(); }
+    else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); prev(); flashHint(); }
+    else if (k === 'Home') { e.preventDefault(); go(0); }
+    else if (k === 'End') { e.preventDefault(); go(total - 1); }
+    else if (k === 'f' || k === 'F') { toggleFs(); }
+    else if (k === 't' || k === 'T') { toggleTheme(); }
+  });
+
+  // click: left third = previous, rest = next (links stay clickable)
+  document.getElementById('deck').addEventListener('click', function (e) {
+    if (e.target.closest('a')) return;
+    if (e.clientX < window.innerWidth * 0.32) prev(); else next();
+    flashHint();
+  });
+
+  // deep-link via hash (#3 opens slide 3)
+  var start = parseInt((location.hash || '').slice(1), 10);
+  if (start >= 1 && start <= total) i = start - 1;
+
+  fit();
+  render();
+  flashHint();
+})();
+</script>
+</body>
+</html>

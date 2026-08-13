@@ -17,6 +17,7 @@ A curated collection of AI agent skills for software development — compatible 
 | **[product-hunt-launch](skills/product-hunt-launch/)** | Fill a Product Hunt launch form end-to-end via the chrome-devtools MCP (React-input & gallery-upload gotchas included) and stop before publishing |
 | **[mysql-schema-design](skills/mysql-schema-design/)** | Design MySQL 8 schemas that enforce data integrity — naming, NULL/DEFAULT semantics, datetime rules, DECIMAL for money, FK actions, CHECK constraints, collations, index hygiene |
 | **[context-guard](skills/context-guard/)** | Diagnose Claude Code sessions that saturate your uplink — scan running sessions, tell bufferbloat apart from real hardware faults, add a status line and hook that surface per-turn upload. *Claude Code only* — it builds on the status line contract, hooks and transcript layout, which Cursor doesn't have |
+| **[html-slide-deck](skills/html-slide-deck/)** | Build self-contained HTML slide decks — one file, 1920×1080 auto-scaling stage, keyboard navigation, dark/light themes, speaker notes as HTML comments, token-based tech-editorial design system with a runnable template |
 
 Each skill includes detailed reference material covering common pitfalls, anti-patterns, and production-ready code patterns.
 
