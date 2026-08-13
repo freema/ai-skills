@@ -122,6 +122,19 @@
       "license": "MIT",
       "keywords": ["mysql", "database", "schema-design", "sql", "migrations", "data-integrity"],
       "category": "development"
+    },
+    {
+      "name": "html-slide-deck",
+      "source": "./skills/html-slide-deck",
+      "description": "Build self-contained HTML slide decks — one file, 1920×1080 auto-scaling stage, keyboard navigation, dark/light themes, speaker notes as HTML comments, token-based design system with a runnable template.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["presentation", "slides", "slide-deck", "pitch-deck", "html", "design-system"],
+      "category": "development"
     }
   ]
 }

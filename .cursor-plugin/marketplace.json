@@ -47,6 +47,11 @@
       "name": "mysql-schema-design",
       "source": "./skills/mysql-schema-design",
       "description": "Design MySQL 8 schemas that enforce data integrity — naming, NOT NULL/DEFAULT semantics, datetime vs timestamp, DECIMAL for money, FK ON DELETE rules, CHECK constraints, collations, index hygiene."
+    },
+    {
+      "name": "html-slide-deck",
+      "source": "./skills/html-slide-deck",
+      "description": "Build self-contained HTML slide decks — one file, 1920×1080 auto-scaling stage, keyboard navigation, dark/light themes, speaker notes as HTML comments, token-based design system with a runnable template."
     }
   ]
 }
