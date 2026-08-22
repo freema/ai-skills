@@ -52,6 +52,11 @@
       "name": "html-slide-deck",
       "source": "./skills/html-slide-deck",
       "description": "Build self-contained HTML slide decks — one file, 1920×1080 auto-scaling stage, keyboard navigation, dark/light themes, speaker notes as HTML comments, token-based design system with a runnable template."
+    },
+    {
+      "name": "implement-spec",
+      "source": "./skills/implement-spec",
+      "description": "Linear-driven implementation loop — take the next unassigned issue from a Linear project and drive it to Done: delegate the implementation, verify with a gate plus one blind e2e pass, quick non-blocking review, PR, merge, close in Linear with follow-ups, next. Serial, context-free between iterations, batched releases."
     }
   ]
 }
