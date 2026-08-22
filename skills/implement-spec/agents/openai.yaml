@@ -1,0 +1,5 @@
+interface:
+  display_name: "Implement Spec (Linear loop)"
+  short_description: "Drive the next unassigned Linear issue to Done — serial loop, blind e2e, batched releases"
+policy:
+  allow_implicit_invocation: false

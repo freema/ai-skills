@@ -135,6 +135,19 @@
       "license": "MIT",
       "keywords": ["presentation", "slides", "slide-deck", "pitch-deck", "html", "design-system"],
       "category": "development"
+    },
+    {
+      "name": "implement-spec",
+      "source": "./skills/implement-spec",
+      "description": "Linear-driven implementation loop — take the next unassigned issue from a Linear project and drive it to Done: delegate the implementation, verify with a gate plus one blind e2e pass, quick non-blocking review, PR, merge, close in Linear with follow-ups, next. Serial, context-free between iterations, batched releases; runs unattended as /loop 45m /implement-spec.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["linear", "implementation-loop", "orchestration", "agents", "backlog", "e2e", "release", "autonomous"],
+      "category": "development"
     }
   ]
 }
