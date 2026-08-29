@@ -1,7 +1,6 @@
 ---
 name: implement-spec
 description: "Linear-driven implementation loop. Take the next unassigned issue from a Linear project and drive it to Done — orient, design, delegate the implementation, verify with a gate plus one blind e2e pass, quick non-blocking review, PR, merge, close in Linear with follow-ups, then the next issue. Serial, context-free between iterations, batched releases. Run once (/implement-spec), on one issue (/implement-spec ABC-123) or unattended (/loop 45m /implement-spec)."
-disable-model-invocation: true
 ---
 
 # implement-spec — the Linear implementation loop
