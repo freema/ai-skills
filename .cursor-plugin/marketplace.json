@@ -57,6 +57,11 @@
       "name": "implement-spec",
       "source": "./skills/implement-spec",
       "description": "Linear-driven implementation loop — take the next unassigned issue from a Linear project and drive it to Done: delegate the implementation, verify with a gate plus one blind e2e pass, quick non-blocking review, PR, merge, close in Linear with follow-ups, next. Serial, context-free between iterations, batched releases."
+    },
+    {
+      "name": "promo-video",
+      "source": "./skills/promo-video",
+      "description": "Make short promo videos as code with HyperFrames (HTML + GSAP rendered to MP4) — product spots, feature demos, game trailers. Facts check and story shape, a runnable template with one camera and a pure frame(t) driver, ElevenLabs voiceover with word timings, captions checked against Netflix rules, sound effects from a cue log, a loudness-checked mix that survives the AAC encode, recorded canvas gameplay, and web/social delivery."
     }
   ]
 }
