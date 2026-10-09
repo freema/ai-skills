@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Promo video template</title>
+    <!-- GSAP and fonts are vendored into the project, not loaded from a CDN (scripts/new-project.sh downloads them) -->
+    <script src="assets/vendor/gsap.min.js"></script>
+    <!-- generated: build_vo.py writes timing.js (window.VO), build_captions.py writes captions.js (window.CAPTIONS) -->
+    <script src="assets/timing.js"></script>
+    <script src="assets/captions.js"></script>
+    <script>window.__timelines = window.__timelines || {};</script>
+    <style>
+      /* Every font family needs an @font-face with a vendored file (lint error font_family_without_font_face otherwise).
+         Replace Inter with the product's own UI font. A "latin" subset has no arrows or check marks: draw those as SVG. */
+      @font-face { font-family: "Inter"; src: url("assets/fonts/inter-latin-wght-normal.woff2") format("woff2-variations"); font-weight: 100 900; font-display: block; }
+      :root { --bg: #f4f5f7; --card: #ffffff; --ink: #15171c; --muted: #5d6573; --line: #e3e6eb; --accent: #4f46e5; --bad: #c2410c; --good: #15803d; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink);
+        font-family: "Inter", sans-serif; }
+      #stage { position: absolute; inset: 0; }
+      .abs { position: absolute; }
+
+      /* one camera: every world layer gets the same transform from frame(t) */
+      #world { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+      .card { position: absolute; background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 18px 40px rgba(21, 23, 28, .08); }
+
+      /* hook: a metric dropping, on the product's own surface */
+      #metric { left: 560px; top: 250px; width: 800px; height: 500px; opacity: 0; }
+      #metric .label { position: absolute; left: 48px; top: 40px; font-size: 30px; font-weight: 600; color: var(--muted); }
+      #metric .value { position: absolute; left: 48px; top: 86px; font-size: 96px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+      #metric .delta { position: absolute; left: 380px; top: 128px; font-size: 34px; font-weight: 700; color: var(--bad); opacity: 0; }
+      #metric svg { position: absolute; left: 48px; top: 240px; }
+
+      /* the product doing one task: a prompt, a click, a result */
+      #app { left: 460px; top: 230px; width: 1000px; height: 620px; opacity: 0; }
+      #app .bar { position: absolute; left: 0; right: 0; top: 0; height: 72px; border-bottom: 1px solid var(--line); }
+      #app .logo { position: absolute; left: 32px; top: 20px; width: 32px; height: 32px; border-radius: 9px; background: var(--accent); }
+      #app .name { position: absolute; left: 80px; top: 19px; font-size: 26px; font-weight: 700; }
+      #input { position: absolute; left: 40px; top: 120px; width: 760px; height: 84px; border: 2px solid var(--line); border-radius: 14px; }
+      #typed { position: absolute; left: 26px; top: 21px; font-size: 32px; white-space: pre; }
+      #ph { position: absolute; left: 26px; top: 21px; font-size: 32px; color: #9aa1ad; }
+      #ask { position: absolute; left: 820px; top: 120px; width: 140px; height: 84px; border-radius: 14px; background: var(--accent); color: #fff;
+        font-size: 30px; font-weight: 700; text-align: center; line-height: 84px; }
+      #result { position: absolute; left: 40px; top: 250px; width: 920px; height: 320px; border-radius: 16px; background: #f0fdf4; border: 2px solid #bbf7d0; opacity: 0; }
+      #result .t { position: absolute; left: 36px; top: 30px; font-size: 30px; font-weight: 700; color: var(--good); }
+      #result .d { position: absolute; left: 36px; top: 86px; width: 840px; font-size: 30px; line-height: 1.45; color: var(--ink); }
+
+      /* end card: logo, claim, one CTA, the URL */
+      #end { position: absolute; inset: 0; background: var(--bg); opacity: 0; visibility: hidden; }
+      #end-logo { left: 880px; top: 250px; width: 160px; height: 160px; border-radius: 40px; background: var(--accent); }
+      #end-name { left: 0; right: 0; top: 440px; text-align: center; font-size: 96px; font-weight: 800; letter-spacing: -2px; }
+      #end-claim { left: 0; right: 0; top: 570px; text-align: center; font-size: 40px; color: var(--muted); }
+      #end-cta { left: 810px; top: 660px; width: 300px; height: 84px; border-radius: 42px; background: var(--accent); color: #fff; font-size: 32px; font-weight: 700; text-align: center; line-height: 84px; }
+      #end-url { left: 0; right: 0; top: 780px; text-align: center; font-size: 38px; font-weight: 600; }
+
+      #cursor { position: absolute; left: 0; top: 0; width: 40px; height: 40px; opacity: 0; visibility: hidden; }
+      #ripple { position: absolute; width: 80px; height: 80px; margin: -40px 0 0 -40px; border-radius: 50%; border: 4px solid var(--accent); opacity: 0; }
+
+      /* burned-in captions: one chunk at a time in a dark pill, each word brightens as it is spoken */
+      #captions { position: absolute; inset: 0; pointer-events: none; }
+      .cap { position: absolute; left: 0; right: 0; bottom: 52px; text-align: center; opacity: 0; }
+      .cap .pill { display: inline-block; max-width: 1300px; padding: 9px 24px 11px; border-radius: 12px; background: rgba(30, 30, 30, .9);
+        font-weight: 600; font-size: 38px; line-height: 1.2; color: #fff; }
+      .cap .w { opacity: .42; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="8" data-fps="60">
+      <div id="stage" class="clip" data-start="0" data-duration="8" data-track-index="0" data-layout-allow-overflow>
+        <div id="world" data-layout-allow-overflow>
+          <div id="metric" class="card">
+            <div class="label">Signups today</div>
+            <div class="value" id="metric-value">1,240</div>
+            <div class="delta" id="metric-delta">−50%</div>
+            <svg width="704" height="200" viewBox="0 0 704 200">
+              <path id="metric-line" d="M0 60 L120 52 L240 66 L360 48 L480 58 L560 150 L704 170" fill="none" stroke="#c2410c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div id="app" class="card">
+            <div class="bar"><div class="logo"></div><div class="name">Product</div></div>
+            <div id="input"><div id="ph">Ask anything…</div><div id="typed"></div></div>
+            <div id="ask">Ask</div>
+            <div id="result">
+              <div class="t">Found the cause</div>
+              <div class="d">Placeholder result. Show the product's real output format here, with example data labelled as made-up in the README.</div>
+            </div>
+          </div>
+          <div id="ripple"></div>
+          <svg id="cursor" viewBox="0 0 24 24"><path d="M4 2 L4 20 L9 15.5 L12.5 22 L15.5 20.6 L12 14 L19 14 Z" fill="#15171c" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" /></svg>
+        </div>
+        <div id="end">
+          <div id="end-logo" class="abs"></div>
+          <div id="end-name" class="abs">Product</div>
+          <div id="end-claim" class="abs">One line that says what it does</div>
+          <div id="end-cta" class="abs">Try it free</div>
+          <div id="end-url" class="abs">example.com</div>
+        </div>
+        <div id="captions" data-layout-ignore></div>
+      </div>
+      <audio id="mix" src="audio/mix.wav" data-start="0" data-duration="8" data-track-index="1" data-volume="1"></audio>
+    </div>
+    <script src="assets/js/scene.js"></script>
+  </body>
+</html>
