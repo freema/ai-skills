@@ -27,6 +27,11 @@ values in the README, not the targets.
 - A free-tier key (observed 2026-10) returned only `mp3_44100_128` and could not list voices or models: pass a
   premade voice ID directly. Premade voices used so far: Jessica `cgSgspJ2msm6clMCkdW9` (speed 1.1), Sarah
   `EXAVITQu4vr4xnSDxMaL` (speed 1.08). Ask the user whether they want a female or male voice.
+- **Native voices for other languages** (Czech, for example) live in the Voice Library, and a free-tier key gets
+  HTTP 402 "Free users cannot use library voices via the API" for them. Premade voices read those languages through
+  `eleven_multilingual_v2`, with an accent. Keep a premade voice as a provisional take, say so in the README, and
+  leave the paid upgrade to the user. Keep a small voice-test script that reads two or three test lines with the
+  candidate library voices, so the switch after an upgrade is one run plus a rebuild from `tts.mjs` on.
 - `build_vo.py` assigns spoken words to lines, cuts each line out of the take with a little pre-roll and decay,
   re-spaces the lines (`head`, per-line `gap_after`, `tail`), runs a light chain (75 Hz high-pass, gentle
   compression) and masters the stem to −14 LUFS / −1 dBTP. It writes `audio/vo/timing.json` and
