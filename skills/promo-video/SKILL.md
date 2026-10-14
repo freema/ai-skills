@@ -60,7 +60,8 @@ Python 3.9, numpy 2.0.
    appear on screen with `curl -L`. See `references/story.md`.
 2. **Ask only the decisions that are the user's**: where the video will live (homepage with sound, feed autoplay,
    ad), voice or music-led, which claims to make, permission to use generated or third-party assets, any real person's
-   name on screen. Decide the rest yourself and write the decisions down.
+   name on screen. Decide the rest yourself and write the decisions down. For a client, pitch 3–4 concepts and
+   get one picked before any script exists (`references/story.md`, "Concepts before production").
 3. **Script as a beat table**: time, picture, super/caption, sound. Hook in the first 3 s on the product's own
    surface, brand by 5 s, one task end to end, one CTA. Keep it working with the sound off.
 4. **Start the project** with `bash <skill>/scripts/new-project.sh <dir>` and run the build loop once on the
@@ -138,7 +139,7 @@ edit needs the whole voice chain. The render embeds `audio/mix.wav` as it is on 
 
 ## References
 
-- `references/story.md`: facts sheet, story shapes for voice spots and music-led trailers, beat grids, captions rules, accessibility, other aspect ratios.
+- `references/story.md`: facts sheet, concepts for client work, story shapes for voice spots and music-led trailers, beat grids, captions rules, accessibility, other aspect ratios.
 - `references/composition.md`: HyperFrames structure, the timeline and `frame(t)`, one camera, motion and easing, cursor, video clips, fonts, SVG and text gotchas, checks.
 - `references/audio.md`: ElevenLabs voiceover and re-takes, music licensing and back-timing, synthesized SFX, rendering a game's own audio offline, the mix and the AAC guard.
 - `references/footage.md`: recording canvas gameplay with input plans, cutting clips, clean page screenshots, rebuilding a product's UI from its CSS and real states.

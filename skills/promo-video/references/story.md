@@ -23,6 +23,26 @@ Rules of thumb:
   from a real run, a leaderboard's columns). Record the run or the request that produced them.
 - Use a real person's name or face only when the user asks for it.
 
+## Concepts before production (client work)
+
+When the video is for a client, nothing gets scripted, voiced or built until the client has picked a direction.
+
+1. **Walk the product with the user first.** Capture the live site (screenshots plus computed fonts and colours),
+   write the facts sheet, and summarize: what the product does, its own claim and CTA, its hero output (the report,
+   the alert, the ranking), and the facts the sources disagree on.
+2. **Draft 3–4 concepts that differ in story, not in styling.** A set that worked: the product's own output as the
+   story (the default recommendation, since it follows the voiceover shape below), problem-first, a feature
+   explainer, and an onboarding demo. Give each 4–5 storyboard beats with a timecode and a voiceover line, plus what
+   it suits, its strengths and its weaknesses. Mark any concept that needs more than 30 s.
+3. **Pick with the user**, together with length and format, voice, and whether the client should choose.
+4. **Client page.** A single page in the client's language: the shared spec (length, format, voice, captions, look,
+   example data, end card), the concepts with storyboard frames drawn in the client's own tokens, the recommendation,
+   and a form whose answers compose a reply the client copies and sends back. Put every conflicting fact into the
+   form as a question that defaults to "leave it out". The user shares the page; never send it yourself.
+5. **Record the choice** in the project README: who chose what, and when. The user may answer for the client and
+   start right away; record those answers and keep the page for a later confirmation. Only then write
+   `script.json`, and send the script with a voice sample for approval before building the composition.
+
 ## Shape of a 30-second voiceover spot
 
 Built on Google's ABCD checklist for video ads (attention, branding, connection, direction), adapted to a demo.
