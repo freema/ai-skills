@@ -4,7 +4,7 @@
 
 1. `node scripts/probe.mjs` after every scene edit: it prints build errors, 404s and the timeline duration (which
    must match `data-duration`).
-2. `node scripts/probe.mjs --shots every:0.5 --out snapshots`, then tile the frames into contact sheets
+2. `node scripts/probe.mjs --shots every:0.5 --out review/frames`, then tile the frames into contact sheets
    (`ffmpeg -i a.png -i b.png -i c.png -filter_complex hstack=3 sheet.png`) and look at them. Look for clipped
    text, stray glyph dots, overlapping UI, captions over controls, framing, cursor jumps between scenes, a video
    that is frozen or missing.
@@ -15,8 +15,11 @@
 ## Render
 
 ```sh
-npx -y hyperframes@0.8.111 render --quality delivery --fps 60 --output renders/<name>.mp4 .
+npx -y hyperframes@0.8.111 render --quality delivery --fps 60 --output renders/<slug>-v1.mp4 .
 ```
+
+Name every render `<slug>[-<lang>][-<variant>]-v<N>.mp4` (`references/projects.md`). Never overwrite a file that has
+been sent or posted; render the next version instead.
 
 - `--video-frame-format png` for pixel art, UI recordings and anything with hard edges.
 - `--quality delivery` gave about 6.5 Mbit/s for flat motion graphics, which looked clean. YouTube recommends
@@ -24,7 +27,8 @@ npx -y hyperframes@0.8.111 render --quality delivery --fps 60 --output renders/<
   the bitrate: a 30 s trailer master was 37 MB.
 - Verify: `ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate:format=duration -of compact out.mp4`
   and `ffmpeg -nostats -i out.mp4 -af ebur128=peak=true -f null -` (integrated loudness and true peak).
-- Captioned and clean versions: render twice, toggling `SHOW_CAPTIONS`.
+- Captioned and clean versions: render twice, toggling `SHOW_CAPTIONS`; the clean one gets the `clean` variant
+  (`<slug>-clean-v1.mp4`).
 
 ## Platforms
 
@@ -38,7 +42,7 @@ Checked 2026-10. Specs change; re-check before posting.
 - **DEV.to and similar blogs** have no video upload: post on YouTube and embed it (`{% embed <url> %}` on DEV.to).
 - **Your own website:** check the site's Content Security Policy first. With no `media-src`, `default-src 'self'`
   applies and the video must be served from the site itself, not from YouTube or a CDN. Then:
-  - `bash scripts/deliver.sh renders/<name>.mp4 <name>-v1 <poster-seconds>` → H.264 MP4 (CRF 23, faststart), VP9
+  - `bash scripts/deliver.sh renders/<slug>-v1.mp4 <slug>-v1 <poster-seconds>` → H.264 MP4 (CRF 23, faststart), VP9
     WebM (two-pass, CRF 33) and a poster JPEG.
   - Put the version in the file name: static files are usually cached as immutable, so a new cut needs a new URL.
   - A section with sound needs a click to play, so use controls and `preload="none"`; nothing downloads until the
@@ -65,6 +69,8 @@ Every video project gets a README with:
   license, music license terms, the user's OK for generated art and the date).
 - **Loudness:** a table of targets and measured values, including the test AAC encode.
 - **Rebuild:** the exact commands, in order.
-- **Status:** "rendered locally" until the user posts it. After a post, record the platform, date and the verified
-  live URL, and keep the post copy next to the project. A render is not a publication, and a platform draft is not a
-  published post.
+- **Status:** "rendered locally" until the user posts it. A render is not a publication, and a platform draft is not
+  a published post.
+- **Publications:** one line per live post (date, platform, account, verified URL), added after you have opened it.
+  The full publication record (render SHA-256, post copy, IDs) stays with the system that publishes; see
+  `references/projects.md`.

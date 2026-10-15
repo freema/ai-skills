@@ -32,7 +32,7 @@ Both: true peak ≤ −1 dBTP after a test AAC encode, 1920×1080, 60 fps, an en
 
 | Path | Does |
 |---|---|
-| `scripts/new-project.sh <dir>` | copies the template and scripts, vendors GSAP 3.14.2 and Inter, writes `.gitignore` |
+| `scripts/new-project.sh <slug>` | creates `~/promo-videos/<slug>` (or `$PROMO_VIDEO_HOME`) from the template and scripts, vendors GSAP 3.14.2 and Inter, starts `README.md` and `facts.md`; refuses inside a git repository |
 | `assets/index.html`, `assets/scene.js` | the template: an 8 s working composition, hook → product does one task (typing, cursor, click, result) → end card, with one camera, `frame(t)`, a cue log and a caption layer |
 | `assets/script.json` | example voiceover script (`say`, `group`, `chunks`, `gap_after`, `burn`) |
 | `scripts/probe.mjs` | serves the project, reports errors, `--cues` exports the SFX cue log, `--shots` saves review frames (videos seeked) |
@@ -64,8 +64,9 @@ Python 3.9, numpy 2.0.
    get one picked before any script exists (`references/story.md`, "Concepts before production").
 3. **Script as a beat table**: time, picture, super/caption, sound. Hook in the first 3 s on the product's own
    surface, brand by 5 s, one task end to end, one CTA. Keep it working with the sound off.
-4. **Start the project** with `bash <skill>/scripts/new-project.sh <dir>` and run the build loop once on the
-   untouched template, so a broken toolchain shows up before your content does.
+4. **Start the project** with `bash <skill>/scripts/new-project.sh <slug>` and run the build loop once on the
+   untouched template, so a broken toolchain shows up before your content does. Keep to the layout and names in
+   "Projects and files" below.
 5. **Assets**: record footage (`references/footage.md`), take clean screenshots, rebuild UI from the product's
    CSS and real data, vendor fonts and the official logo. Draw illustrations yourself.
 6. **Voiceover** (voice spots): write `audio/vo/script.json`, `tts.mjs`, `build_vo.py`, `build_captions.py`. The
@@ -88,20 +89,37 @@ HF="npx -y hyperframes@0.8.111"                                # pin the version
 node scripts/tts.mjs && python3 scripts/build_vo.py && python3 scripts/build_captions.py   # voice spots only
 node scripts/probe.mjs --cues audio/cues.json        # SFX cue log from the scene
 python3 scripts/build_mix.py                         # → audio/mix.wav, audio/loudness.json
-node scripts/probe.mjs --shots every:0.5 --out snapshots
+node scripts/probe.mjs --shots every:0.5 --out review/frames
 $HF lint .                                           # 0 errors
 $HF check --samples 24 --timeout 15000 --caption-zone "x0=0;y0=.86;x1=1;y1=1" .
-$HF render --quality delivery --fps 60 --output renders/<name>.mp4 .   # add --video-frame-format png for pixel art / UI footage
+$HF render --quality delivery --fps 60 --output renders/<slug>-v1.mp4 .   # add --video-frame-format png for pixel art / UI footage
 ```
 
 Rerun from the step you changed: a scene edit that moves a cue needs `--cues` and `build_mix.py` again; a script
 edit needs the whole voice chain. The render embeds `audio/mix.wav` as it is on disk.
+
+## Projects and files
+
+Details and the migration steps are in `references/projects.md`.
+
+- **Home:** every project is `$PROMO_VIDEO_HOME/<slug>/` (default `~/promo-videos/<slug>/`), one per video. All of
+  its languages and formats stay in that one project.
+- **Never committed:** projects live outside every git repository, media and composition code alike. Reusable code
+  goes into this skill, not into another project or a product repository.
+- **Fixed layout:** `README.md`, `facts.md`, `script.md`, `index.html`, `assets/`, `audio/`, `scripts/`, optional
+  `research/`, `capture/` and `concepts/`, then `review/` (scratch), `renders/` (deliverables) and `archive/`
+  (rejected versions). No other top-level directories.
+- **Render names:** `renders/<slug>[-<lang>][-<variant>]-v<N>.mp4`, sidecar captions with the same stem. A file that
+  has been sent or posted is never overwritten; the next cut is the next version.
+- **Publication records** stay with the system that publishes, pinned to the render's SHA-256. The project README
+  lists each live post's date, platform and URL.
 
 ## Rules that are not negotiable
 
 - **Keys stay in `.env`.** `tts.mjs` reads `ELEVENLABS_API_KEY` from the environment or a `.env` file and never
   prints it. Never put a key in a prompt, a script, a log or a README. Do not read `.env*`, credentials or keys in
   the product's repository while researching it.
+- **Nothing from a video project is committed**, and no project is started inside a repository.
 - **A local render is not a publication.** Never run `hyperframes publish`, upload, or post without the user's
   explicit go-ahead for that destination. Record a platform, date and URL only after the post is live and you
   have opened it.
@@ -143,4 +161,6 @@ edit needs the whole voice chain. The render embeds `audio/mix.wav` as it is on 
 - `references/composition.md`: HyperFrames structure, the timeline and `frame(t)`, one camera, motion and easing, cursor, video clips, fonts, SVG and text gotchas, checks.
 - `references/audio.md`: ElevenLabs voiceover and re-takes, music licensing and back-timing, synthesized SFX, rendering a game's own audio offline, the mix and the AAC guard.
 - `references/footage.md`: recording canvas gameplay with input plans, cutting clips, clean page screenshots, rebuilding a product's UI from its CSS and real states.
+- `references/projects.md`: where projects live, the directory layout, render names and versions, publication
+  records, finishing a project, moving an old project into the layout.
 - `references/delivery.md`: the review loop, render settings, platform notes (X, YouTube, LinkedIn, DEV.to, self-hosted website), the project README and publication records.
