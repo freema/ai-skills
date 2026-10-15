@@ -17,7 +17,11 @@ agent, finds everything without asking.
   render by its SHA-256 (see "Publications" below).
 - **One project per video.** Languages, aspect ratios, and captioned and clean versions of the same video share
   one project. A series gets one project per episode, named `<series>-<nn>-<topic>`; start an episode by copying
-  `scripts/` and `assets/js/` from the previous one.
+  `scripts/` and `assets/js/` from the previous one. A series whose episodes are built by one shared engine (one
+  build script, shared captures) stays one project with a subdirectory per episode; its renders are
+  `<series>-<episode>-v<N>.mp4`.
+- **Keys:** the voice scripts read `ELEVENLABS_API_KEY` from the environment or a `.env` in the project or its
+  parent, so one owner-only `$PROMO_VIDEO_HOME/.env` serves every project. Never copy it into a project.
 
 ## Layout
 
