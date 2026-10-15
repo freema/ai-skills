@@ -4,7 +4,7 @@ Each generator returns a mono float32 array at 48 kHz and is deterministic: nois
 build_mix.py calls render(type, **params) for every cue in audio/cues.json whose type is a key of GENERATORS.
 Add a generator for each new kind of hit rather than downloading effects, and keep render()'s declick.
 
-  python3 scripts/sfx.py            # writes audio/sfx-preview/<name>.wav for every generator, to audition them
+  python3 scripts/sfx.py            # writes review/sfx/<name>.wav for every generator, to audition them
 """
 import numpy as np
 
@@ -230,7 +230,7 @@ def render(name, **kw):
 if __name__ == '__main__':
     import subprocess
     from pathlib import Path
-    out = Path(__file__).resolve().parent.parent / 'audio' / 'sfx-preview'
+    out = Path(__file__).resolve().parent.parent / 'review' / 'sfx'
     out.mkdir(parents=True, exist_ok=True)
     for name in GENERATORS:
         y = render(name)

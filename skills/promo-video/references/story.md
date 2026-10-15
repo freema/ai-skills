@@ -83,7 +83,7 @@ that matters → the code or the click → result and what the user never has to
   line's `gap_after`, not by cutting words.
 - Skip burning in lines the end card already writes in sync (`"burn": false`); the `.srt`/`.vtt` keep every line.
 - Write the brand in its own casing.
-- Render two versions: captioned, and `-no-captions` (`SHOW_CAPTIONS = false`) for platforms that take a caption
+- Render two versions: captioned, and `-clean` (`SHOW_CAPTIONS = false`) for platforms that take a caption
   file.
 - Size: BBC guidance asks for a line height of 7–8% of the frame height and a line width of at most 68% of the
   frame. A 38 px pill (about 3.5%) suits a 16:9 video watched full screen; a vertical variant needs larger type.

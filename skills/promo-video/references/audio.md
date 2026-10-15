@@ -82,7 +82,7 @@ Put the result in `audio/stems/` and point `MUSIC` at it with `track_hit = spot_
   click, tick, whoosh, error, success, stamp, blip, hop, lock, sparkle, riser, sweep, drop, chirp, ding. Generator
   parameters ride on the cue (`{dur: 0.5}`, `{pitch: 1.2}`, `{note: 76}`); `gain` is in dB.
 - Add a generator for each new kind of hit rather than downloading effects. Keep `render()`'s declick and seed any
-  noise. Audition everything with `python3 scripts/sfx.py` (writes `audio/sfx-preview/`).
+  noise. Audition everything with `python3 scripts/sfx.py` (writes `review/sfx/`).
 - Typing: the template logs a quiet `tick` on every second character; at typing speed that already reads as typing.
 - Each cue gets a small deterministic pan, so stacked hits do not all sit dead centre.
 

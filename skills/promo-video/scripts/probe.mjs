@@ -2,8 +2,8 @@
 // save review frames. Each <video data-start> is seeked to the timeline the way the HyperFrames runtime would.
 //   node scripts/probe.mjs                                   errors + timeline duration
 //   node scripts/probe.mjs --cues audio/cues.json            write window.__cues for build_mix.py
-//   node scripts/probe.mjs --shots 0.5,1,1.5 --out snapshots review frames (t000.500.png, …)
-//   node scripts/probe.mjs --shots every:0.5 --out snapshots a frame every 0.5 s
+//   node scripts/probe.mjs --shots 0.5,1,1.5 --out review/frames  review frames (t000.500.png, …)
+//   node scripts/probe.mjs --shots every:0.5 --out review/frames  a frame every 0.5 s
 // Run from the project directory (the one with index.html).
 import http from 'node:http';
 import fs from 'node:fs';
@@ -59,7 +59,7 @@ if (ok && args.cues) {
 }
 
 if (ok && args.shots) {
-  const out = path.resolve(root, typeof args.out === 'string' ? args.out : 'snapshots');
+  const out = path.resolve(root, typeof args.out === 'string' ? args.out : 'review/frames');
   fs.mkdirSync(out, { recursive: true });
   let times = String(args.shots).startsWith('every:')
     ? Array.from({ length: Math.floor(dur / +String(args.shots).slice(6)) + 1 }, (_, i) => +(i * +String(args.shots).slice(6)).toFixed(3))
