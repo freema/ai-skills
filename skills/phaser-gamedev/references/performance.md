@@ -1,6 +1,6 @@
 # Performance Optimization
 
-Strategies for maintaining smooth 60fps in Phaser 3 games.
+Strategies for maintaining smooth 60fps in Phaser 4 games. Measure before and after any optimisation.
 
 ## Object Pooling
 
@@ -268,11 +268,12 @@ sprite.destroy();
 // Clear groups
 group.clear(true, true);  // Remove from scene, destroy
 
-// Scene cleanup
-shutdown() {
+// Scene cleanup — Phaser never calls a scene method named shutdown();
+// listen for the event (in create()):
+this.events.once("shutdown", () => {
   this.enemies.destroy(true);
   this.bulletPool.destroy(true);
-}
+});
 ```
 
 ### Unload Unused Assets
@@ -281,13 +282,13 @@ shutdown() {
 // Remove texture
 this.textures.remove('unused-texture');
 
-// Remove audio
-this.sound.remove('unused-sound');
+// Remove audio (remove() takes a sound instance; removeByKey() a key)
+this.sound.removeByKey('unused-sound');
 
 // In scene shutdown
-shutdown() {
+this.events.once('shutdown', () => {
   this.cache.tilemap.remove('level1');
-}
+});
 ```
 
 ### Monitor Memory

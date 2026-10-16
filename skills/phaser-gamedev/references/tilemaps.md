@@ -1,6 +1,6 @@
 # Tilemaps Reference
 
-Comprehensive expert guide for Phaser 3 tilemap integration with Tiled Map Editor.
+Comprehensive expert guide for Phaser 4 tilemap integration with Tiled Map Editor.
 
 ---
 
@@ -636,7 +636,9 @@ this.cameras.main.startFollow(player, true, 0.1, 0.1);
 // Deadzone (player can move in center without camera moving)
 this.cameras.main.setDeadzone(200, 100);
 
-// Round pixels (prevents tile seams at fractional positions)
+// Round pixels (prevents tile seams at fractional positions).
+// Phaser 4: game config `roundPixels` defaults to false (was true in v3) and
+// only rounds axis-aligned, unscaled objects — see v3-to-v4-migration §16.
 this.cameras.main.roundPixels = true;
 ```
 
