@@ -1,6 +1,6 @@
 # Phaser Core Patterns (Scenes, Objects, Input, Assets)
 
-Practical Phaser 3 snippets and patterns that are helpful to copy/adapt during implementation.
+Practical Phaser 4 snippets to copy/adapt. For any API not shown here, the source of truth is the topic library in `.claude/skills/phaser/<topic>/SKILL.md`.
 
 ## Contents
 
@@ -11,7 +11,7 @@ Practical Phaser 3 snippets and patterns that are helpful to copy/adapt during i
 - Input handling (keyboard + pointer)
 - Animations (create + play)
 - Asset loading + Boot scene loading bar
-- Suggested project structure + ES module setup
+- PixelDen game layout
 
 ---
 
@@ -119,18 +119,6 @@ this.scene.resume("GameScene");
 
 // Stop a scene
 this.scene.stop("UIScene");
-```
-
-### Recommended scene structure
-
-```
-scenes/
-├── BootScene.js      # Asset loading, progress bar
-├── MenuScene.js      # Title screen, options
-├── GameScene.js      # Main gameplay
-├── UIScene.js        # HUD overlay (launched parallel)
-├── PauseScene.js     # Pause menu overlay
-└── GameOverScene.js  # End screen, restart option
 ```
 
 ---
@@ -417,39 +405,17 @@ class BootScene extends Phaser.Scene {
 
 ---
 
-## Project Structure
+## PixelDen Game Layout
 
-### Suggested organization
+Each game lives in `app/games/<slug>/` (see `snake/` or `tumblekin/`):
 
 ```
-game/
-├── src/
-│   ├── scenes/
-│   ├── gameObjects/
-│   ├── systems/
-│   ├── config/
-│   └── main.js
-├── assets/
-│   ├── images/
-│   ├── audio/
-│   ├── tilemaps/
-│   └── fonts/
-├── index.html
-└── package.json
+app/games/<slug>/
+├── index.ts      # client-only entry: export { getXxxConfig as getConfig } from "./config"
+├── config.ts     # getXxxConfig(viewport?) → Phaser.Types.Core.GameConfig, scene: [...]
+├── data.ts       # constants (sizes, tuning)
+├── scenes/       # boot.ts (all preloads), menu.ts, game.ts, results/game-over...
+└── *.test.ts     # Vitest for pure logic (engine, scoring, levels)
 ```
 
-### ES module setup
-
-```javascript
-import Phaser from "phaser";
-import BootScene from "./scenes/BootScene";
-import GameScene from "./scenes/GameScene";
-import { gameConfig } from "./config/gameConfig";
-
-const config = {
-  ...gameConfig,
-  scene: [BootScene, GameScene],
-};
-
-new Phaser.Game(config);
-```
+`app/components/game-canvas.tsx` calls `getConfig(viewport)` and creates the `Phaser.Game`; games never call `new Phaser.Game` themselves. Import Phaser as `import * as Phaser from "phaser";` (repo convention). Metadata (slug, sizes, viewports) lives in `app/games/registry.ts`, not in the game folder.
