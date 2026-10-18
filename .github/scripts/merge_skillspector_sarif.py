@@ -2,7 +2,9 @@
 """Merge per-skill SkillSpector SARIF files into one run with repo-relative paths.
 
 SkillSpector writes locations relative to the scanned skill (SKILL.md, scripts/x.sh) and one run per scan.
-Code scanning needs paths from the repo root and accepts one run per tool and category in an upload.
+Code scanning needs paths from the repo root and accepts one run per tool and category in an upload. It also
+opens alerts for results marked as suppressed, so results suppressed by .skillspector/<skill>.yaml are left out;
+their reasons live in those files.
 
     merge_skillspector_sarif.py <dir with <skill>.sarif files> <output.sarif>
 """
@@ -19,6 +21,8 @@ for path in sorted(glob.glob(os.path.join(src, '*.sarif'))):
         for rule in run['tool']['driver'].get('rules', []):
             rules[rule['id']] = rule
         for result in run.get('results', []):
+            if result.get('suppressions'):
+                continue
             result.pop('ruleIndex', None)  # indexes point into the per-skill rule list
             for loc in result.get('locations', []) + result.get('relatedLocations', []):
                 art = loc.get('physicalLocation', {}).get('artifactLocation', {})

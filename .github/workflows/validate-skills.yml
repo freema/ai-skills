@@ -124,7 +124,7 @@ jobs:
       - name: Upload SARIF
         if: always() && hashFiles('agnix-results.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: agnix-results.sarif
 
@@ -189,7 +189,7 @@ jobs:
       - name: Upload SkillSpector SARIF
         if: always() && hashFiles('skillspector-results.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: skillspector-results.sarif
           category: skillspector
