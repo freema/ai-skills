@@ -21,6 +21,9 @@ Rules of thumb:
   while deeper paths 404 is common; show the URL that works.
 - Real output beats invented output: copy the product's real formats (an alert email subject, a widget's states
   from a real run, a leaderboard's columns). Record the run or the request that produced them.
+- Show the evidence, not a picture of the claim. When the voice says the docs promise something, show the docs
+  page with that sentence marked; when it names a place, show the product's own map or listing of it. A generic
+  icon (a shield for "secure", a clock for "fast") proves nothing and looks like stock.
 - Use a real person's name or face only when the user asks for it.
 
 ## Concepts before production (client work)

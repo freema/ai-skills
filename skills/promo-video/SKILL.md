@@ -37,6 +37,7 @@ Both: true peak ≤ −1 dBTP after a test AAC encode, 1920×1080, 60 fps, an en
 | `assets/script.json` | example voiceover script (`say`, `group`, `chunks`, `gap_after`, `burn`) |
 | `scripts/probe.mjs` | serves the project, reports errors, `--cues` exports the SFX cue log, `--shots` saves review frames (videos seeked) |
 | `scripts/tts.mjs` | ElevenLabs take with character timestamps; `--line` re-takes one line; `--dry-run` |
+| `scripts/voice-test.mjs` | the same script lines read by 3–4 candidate voices, for picking by ear; prints the credits first |
 | `scripts/build_vo.py` | splits the take into lines, re-spaces them, masters the voice, writes word timings |
 | `scripts/build_captions.py` | caption chunks + `.srt`/`.vtt`; fails the build on Netflix rule breaks |
 | `scripts/sfx.py` | 17 deterministic synthesized UI sounds (pop, click, tick, whoosh, ding, …) |
@@ -64,21 +65,42 @@ Python 3.9, numpy 2.0.
    get one picked before any script exists (`references/story.md`, "Concepts before production").
 3. **Script as a beat table**: time, picture, super/caption, sound. Hook in the first 3 s on the product's own
    surface, brand by 5 s, one task end to end, one CTA. Keep it working with the sound off.
+   **Get it approved before anything paid runs** (a voice take, a voice test, licensed music): show the spoken
+   lines as they will be read and the cost (`tts.mjs --dry-run` and `voice-test.mjs --dry-run` print characters
+   and credits). Revise until the user says go; every rewrite after the take costs a re-take.
 4. **Start the project** with `bash <skill>/scripts/new-project.sh <slug>` and run the build loop once on the
    untouched template, so a broken toolchain shows up before your content does. Keep to the layout and names in
    "Projects and files" below.
 5. **Assets**: record footage (`references/footage.md`), take clean screenshots, rebuild UI from the product's
    CSS and real data, vendor fonts and the official logo. Draw illustrations yourself.
-6. **Voiceover** (voice spots): write `audio/vo/script.json`, `tts.mjs`, `build_vo.py`, `build_captions.py`. The
-   printed total becomes `data-duration`. Key every visual beat to word times (`references/audio.md`).
+6. **Voiceover** (voice spots): offer 3–4 candidate voices and let the user pick from `voice-test.mjs` samples of
+   the real script, then `tts.mjs`, `build_vo.py`, `build_captions.py`. The printed total becomes `data-duration`. Key every visual beat to word times (`references/audio.md`).
 7. **Compose**: replace the template's beats in the project's `index.html` and `scene.js`, following
    `references/composition.md`. Log a cue for every sound with `cue(t, type, {gain})`.
 8. **Sound**: `probe.mjs --cues`, then `build_mix.py`. Report the measured loudness, not the targets.
 9. **Review**: frames every 0.5–1 s with `probe.mjs --shots`, then `lint` and `check`, then the render, then
-   frames extracted from the final MP4. Look at them; `check` samples and can miss a shot.
+   frames extracted from the final MP4. Look at them; `check` samples and can miss a shot. Hold the frames against
+   "What a good result looks like" below and fix what fails before showing the user.
 10. **Deliver and document**: render, verify with ffprobe and ebur128, encode for the destination
     (`references/delivery.md`), and write the project README: sources and licenses, what is made up, measured
-    loudness, posting notes, rebuild steps.
+    loudness, what it cost, posting notes, rebuild steps.
+
+## What a good result looks like
+
+The tools above make a video correct. These make it worth watching; check every review pass against them.
+
+- **The real thing, not a symbol for it.** The product's own screen, output, map or document rather than an icon
+  that stands for it. When the point is a sentence on a page, show that page and mark the sentence, so the viewer
+  sees it really says so.
+- **Every beat has its own idea.** No two beats in a row with the same layout and the same move. One main
+  transition style, one accent at the climax (`references/composition.md`, "Motion").
+- **Nothing stands still.** Something moves in every shot: a slow camera drift, the product doing its job, a
+  counter, a cursor. A frame that holds for more than about 1.5 s outside the end card reads as a slide.
+- **Picture follows the voice.** Every visual change lands on the word that names it, or on the beat in a
+  music-led piece. A change that comes half a second late reads as a mistake.
+- **Lines written to be heard.** Whole sentences with verbs, one thought per line, numbers written as they are
+  said. A keyword staccato ("Fast. Simple. Secure.") sounds read off a slide.
+- **It works with the sound off.** Captions and supers carry the story; the video still makes sense muted.
 
 ## Build loop
 
