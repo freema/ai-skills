@@ -5,9 +5,15 @@ on:
     branches: [main]
     paths:
       - "skills/**"
+      - ".skillspector/**"
+      - ".github/workflows/validate-skills.yml"
+      - ".github/scripts/**"
   pull_request:
     paths:
       - "skills/**"
+      - ".skillspector/**"
+      - ".github/workflows/validate-skills.yml"
+      - ".github/scripts/**"
 
 permissions:
   contents: read
@@ -122,13 +128,80 @@ jobs:
         with:
           sarif_file: agnix-results.sarif
 
+      # --- SkillSpector (NVIDIA) ---
+      # Static security scan: prompt injection, exfiltration, credential access, supply chain.
+      # Exit codes: 0=risk score <= 50, 1=score > 50, 2=scan error. Both 1 and 2 fail.
+      # Reviewed false positives live in .skillspector/<skill>.yaml (narrow, per-file rules).
+
+      - name: Set up Python
+        if: always()
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install SkillSpector
+        if: always()
+        # pinned to the v2.13.0 commit: a scanner installed from a moving branch is a supply-chain risk itself
+        run: pip install "git+https://github.com/NVIDIA/skillspector.git@091a509b3d6ba8ff5be528966e1f43c2e68cf214"
+
+      - name: Run SkillSpector
+        id: skillspector
+        if: always()
+        run: |
+          FAILED=false
+          mkdir -p skillspector-sarif
+          SKILLS=()
+          IFS=' ' read -ra DIRS <<< "${{ steps.targets.outputs.paths }}"
+          for dir in "${DIRS[@]}"; do
+            [ -z "$dir" ] && continue
+            dir=${dir%/}
+            if [ -f "$dir/SKILL.md" ]; then
+              SKILLS+=("$dir")
+            else
+              for s in "$dir"/*/; do [ -f "$s/SKILL.md" ] && SKILLS+=("${s%/}"); done
+            fi
+          done
+          for skill in "${SKILLS[@]}"; do
+            name=$(basename "$skill")
+            BASELINE=()
+            [ -f ".skillspector/$name.yaml" ] && BASELINE=(--baseline ".skillspector/$name.yaml")
+            echo "::group::skillspector — $skill"
+            EXIT=0
+            skillspector scan "$skill" --no-llm "${BASELINE[@]}" -f sarif -o "skillspector-sarif/$name.sarif" || EXIT=$?
+            printf '<details><summary>SkillSpector — %s (exit %s)</summary>\n\n' "$name" "$EXIT" >> "$GITHUB_STEP_SUMMARY"
+            skillspector scan "$skill" --no-llm "${BASELINE[@]}" -f markdown | tee -a "$GITHUB_STEP_SUMMARY" || true
+            echo "</details>" >> "$GITHUB_STEP_SUMMARY"
+            echo "::endgroup::"
+            if [ "$EXIT" -ne 0 ]; then
+              FAILED=true
+              echo "::error::SkillSpector: $skill exited $EXIT (1 = risk score above 50, 2 = scan error)"
+            fi
+          done
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          # Always exit 0; the "Check results" step decides pass/fail
+          exit 0
+
+      - name: Merge SkillSpector SARIF
+        if: always() && hashFiles('skillspector-sarif/*.sarif') != ''
+        continue-on-error: true
+        run: python3 .github/scripts/merge_skillspector_sarif.py skillspector-sarif skillspector-results.sarif
+
+      - name: Upload SkillSpector SARIF
+        if: always() && hashFiles('skillspector-results.sarif') != ''
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: skillspector-results.sarif
+          category: skillspector
+
       - name: Check results
         if: always()
         run: |
           SV="${{ steps.skill-validator.outputs.failed }}"
           AG="${{ steps.agnix.outputs.failed }}"
-          if [ "$SV" = "true" ] || [ "$AG" = "true" ]; then
-            echo "::error::Validation failed — skill-validator=$SV, agnix=$AG"
+          SS="${{ steps.skillspector.outputs.failed }}"
+          if [ "$SV" = "true" ] || [ "$AG" = "true" ] || [ "$SS" = "true" ]; then
+            echo "::error::Validation failed — skill-validator=$SV, agnix=$AG, skillspector=$SS"
             exit 1
           fi
           echo "All checks passed (warnings are allowed)."

@@ -1,0 +1,35 @@
+# SkillSpector suppressions for skills/promo-video, reviewed by hand (see README "Security scanning").
+# Each rule is scoped to one rule id, one file and the matched text, so a new finding elsewhere stays active.
+version: 2
+rules:
+  - id: PE3
+    path: scripts/tts.mjs
+    message: "*.env*"
+    reason: tts.mjs reads ELEVENLABS_API_KEY from the environment or the project's .env and only sends it to ElevenLabs
+  - id: E1
+    path: scripts/tts.mjs
+    message: "*https://api.elevenlabs.io/*"
+    reason: the voiceover is the ElevenLabs text-to-speech API, the one documented network call
+  - id: AST4
+    path: scripts/*.py
+    message: "subprocess.run(['ffmpeg', *"
+    reason: ffmpeg called with an argument list (no shell); arguments are project paths and numbers
+  - id: AST4
+    path: scripts/audiolib.py
+    message: "subprocess.run(args + ['-af', 'ebur128=peak=true'*"
+    reason: the loudness probe; args is the ffmpeg argument list built a few lines above, no shell
+  - id: TT2
+    path: scripts/cut_clips.py
+    message: "subprocess.run(['ffmpeg'*"
+    reason: the clip plan is the project's own JSON; ffmpeg gets an argument list, no shell
+  - id: AE1
+    path: SKILL.md
+    message: "scripts/*.* (partial)"
+    reason: static parser span limit on long lines in the bundled scripts, not evasion; the scripts are reviewed in the repo
+  - id: LP3
+    path: SKILL.md
+    reason: the skill has no MCP tools to declare; allowed-tools would grant tools, not restrict them
+  - id: EA2
+    path: references/projects.md
+    message: "without asking"
+    reason: prose about finding files without asking, not an autonomous action
