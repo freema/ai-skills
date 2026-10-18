@@ -1,234 +1,99 @@
 ---
 name: phaser-gamedev
-description: "Build 2D browser games with Phaser 3 (JS/TS): scenes, sprites, physics (Arcade/Matter), tilemaps (Tiled), animations, input. Trigger: 'Phaser scene', 'Arcade physics', 'tilemap', 'Phaser 3 game'."
+description: "PixelDen rules for building and fixing browser games on Phaser 4 (TypeScript): reading order, game folder layout, spritesheet protocol, keyboard and React-wrapper pitfalls, pre-release audit. Phaser API itself comes from the official Phaser skills. Trigger: any work in app/games/**, 'Phaser scene', 'Arcade physics', 'tilemap', 'spritesheet'."
 ---
 
-# Phaser Game Development
+# Phaser Game Development (PixelDen)
 
-Build 2D browser games using Phaser 3's scene-based architecture and physics systems.
+This skill holds only what is specific to PixelDen. **For any Phaser API question use the official Phaser skills** from [phaserjs/phaser `skills/`](https://github.com/phaserjs/phaser/tree/master/skills), kept locally in `.claude/skills/phaser/<topic>/SKILL.md` (gitignored; refresh by copying the upstream `skills/` folder over it).
+
+The repo runs **Phaser 4** (`package.json`: `"phaser": "^4.0.0"`). Host `node_modules/phaser` may still hold 3.90, so never look APIs up there. Upstream skills track the latest 4.x: if one names an API, check it exists in the version we run before using it.
+
+## Official skill per topic
+
+| Working on…                                   | Official skill (`.claude/skills/phaser/…`)                |
+| --------------------------------------------- | --------------------------------------------------------- |
+| Game config, boot, renderer                   | `game-setup-and-config`                                   |
+| Scenes, lifecycle, transitions, shutdown      | `scenes`, `events-system`                                 |
+| Sprites, images, text, graphics               | `sprites-and-images`, `text-and-bitmaptext`, `graphics-and-shapes` |
+| Animations, tweens, timers                    | `animations`, `tweens`, `time-and-timers`                 |
+| Input (keyboard, pointer, touch)              | `input-keyboard-mouse-touch`                              |
+| Arcade / Matter physics                       | `physics-arcade`, `physics-matter`                        |
+| Tilemaps                                      | `tilemaps`                                                |
+| Loading assets, atlases                       | `loading-assets`                                          |
+| Cameras, scaling, resize                      | `cameras`, `scale-and-responsive`                         |
+| RenderTexture / DynamicTexture                | `render-textures`                                         |
+| Filters, masks, post FX, particles            | `filters-and-postfx`, `particles`                         |
+| Groups, containers, pooling                   | `groups-and-containers`                                   |
+| Writing v3 habits by mistake                  | `v3-to-v4-migration`, `v4-new-features`                   |
+
+The v4 traps that already bit this repo (all in `v3-to-v4-migration`): `setTintFill` is gone and only logs an error (use `setTint(c).setTintMode(Phaser.TintModes.FILL)`); DynamicTexture/RenderTexture draws do nothing until `render()`, and stamped objects must stay unchanged until then (pattern: `app/games/solitaire/card-textures.ts`); `roundPixels` now defaults to `false`.
 
 ---
 
 ## Before Starting A New Game Or Touching An Existing One
 
-**Read [read-before-implement.md](references/read-before-implement.md) first.** Three-layer reading order (skill docs → target game → shared helpers) and the pre-implementation output checklist. Skipping this is the #1 source of invented APIs and wrong assumptions.
+**Read [read-before-implement.md](references/read-before-implement.md) first**: reading order (skill docs → target game → shared helpers) and the pre-implementation checklist.
 
-**Before merging to main**, run the relevant checks in [pre-release-audit.md](references/pre-release-audit.md) — 7 reactive error signatures + 7 proactive consistency checks (asset keys, scene registration, `reloadDocument` on game links, touch-controls cleanup, viewport restart guard).
+**Before merging to main**, run the relevant checks in [pre-release-audit.md](references/pre-release-audit.md): reactive error signatures (R1–R7), consistency checks (P1–P11: asset keys, scene registration, `reloadDocument`, touch-controls cleanup, viewport restart guard, overlay click guard…) and browser verification.
 
-**When reaching for abstraction**, consult [game-patterns.md](references/game-patterns.md) first — it catalogs composition patterns (BehaviorManager, FSM, TurnManager, WaveManager, CardManager, DialogueManager) with explicit "when to extract" vs "stay ad-hoc" signals. Prevents premature abstraction.
+**When reaching for abstraction**, consult [game-patterns.md](references/game-patterns.md) first (FSM, TurnManager, WaveManager, CardManager, DialogueManager, with "when to extract" signals).
+
+## PixelDen Game Layout
+
+Each game lives in `app/games/<slug>/` (see `snake/` or `tumblekin/`):
+
+```
+app/games/<slug>/
+├── index.ts      # client-only entry: export { getXxxConfig as getConfig } from "./config"
+├── config.ts     # getXxxConfig(viewport?) → Phaser.Types.Core.GameConfig, scene: [...]
+├── data.ts       # constants (sizes, tuning)
+├── scenes/       # boot.ts (all preloads), menu.ts, game.ts, results/game-over...
+└── *.test.ts     # Vitest for pure logic (engine, scoring, levels)
+```
+
+`app/components/game-canvas.tsx` calls `getConfig(viewport)` and creates the `Phaser.Game`; games never call `new Phaser.Game` themselves. Import Phaser as `import * as Phaser from "phaser";`. Metadata (slug, sizes, viewports) lives in `app/games/registry.ts`, not in the game folder.
 
 ---
 
 ## STOP: Before Loading Any Spritesheet
 
-**Read [spritesheets-nineslice.md](references/spritesheets-nineslice.md) FIRST.**
+**Read [spritesheets-nineslice.md](references/spritesheets-nineslice.md) FIRST.** A few pixels off corrupts every frame silently.
 
-Spritesheet loading is fragile—a few pixels off causes silent corruption that compounds into broken visuals. The reference file contains the mandatory inspection protocol.
+1. **Measure the asset** before writing loader code; never guess frame dimensions.
+2. **Character sprites use square frames**: if frameWidth is 56, try 56 for height first.
+3. **Each animation has its own frame size** (a run or an attack is wider than idle): measure each sheet.
+4. **Check for spacing**: gaps between frames need `spacing: N`.
+5. **Verify**: `imageWidth = frameWidth × cols + spacing × (cols − 1)`.
 
-**Quick rules** (details in reference):
+## Keyboard Input Inside the React Page
 
-1. **Measure the asset** before writing loader code—never guess frame dimensions
-2. **Character sprites use SQUARE frames**: If you calculate frameWidth=56, try 56 for height first
-3. **Different animations have different frame sizes**: A run cycle needs wider frames than idle; an attack needs extra width for weapon swing. Measure EACH spritesheet independently
-4. **Check for spacing**: Gaps between frames require `spacing: N` in loader config
-5. **Verify the math**: `imageWidth = (frameWidth × cols) + (spacing × (cols - 1))`
+**Read [keyboard-input.md](references/keyboard-input.md).** In short: game config sets `input.keyboard.target: window` (canvas focus is irrelevant), each scene calls `addCapture([...])` for its keys, and **nothing may `preventDefault()` a keydown before Phaser sees it** (Phaser skips `defaultPrevented` events). Discrete `keydown-X` handlers dedupe with a `WeakSet` (below).
 
 ---
+
+## Repo Pitfalls (Learned the Hard Way)
+
+- **Clicks through HTML overlays.** Phaser also listens for `mousedown`/`mouseup` on `window`, so a click on a React dialog over the canvas hits the Phaser button underneath. Guard buttons that can sit under an overlay with `pointer.event?.target === game.canvas` ([audit P10](references/pre-release-audit.md)).
+- **Replayed keydowns.** When rAF stalls (background tab, headless Chrome) Phaser re-emits the queued keydown events on every new key. Gate discrete handlers with a `WeakSet<KeyboardEvent>` of seen events ([keyboard-input.md](references/keyboard-input.md)).
+- **React wrapper teardown.** The `Phaser.Game` init `useEffect` in `app/components/game-canvas.tsx` depends on `[slug]` only; any other dep makes loader revalidation (after game-over) destroy and recreate the game ([audit P11](references/pre-release-audit.md)).
+- **Resize restart loops.** Restart or relayout only when the size really changed; layout shifts around the canvas fire resize events with the same size ([audit P8](references/pre-release-audit.md)).
+- **Scene cleanup.** A scene method named `shutdown()` is never called; register cleanup with `this.events.once("shutdown", …)` in `create()`.
+- **Scaled sprites and Arcade bodies.** PixelLab sprites are larger than their display size, and `body.setSize()` is multiplied by the sprite scale: size bodies from `sprite.frame.width/height`, not the display size. Arcade bodies never rotate with `setAngle()`; use an invisible zone for the collision. For moving platforms or a scrolling world with custom body sizes use an immovable dynamic body, since a static body's `updateFromGameObject()` overwrites a custom size.
+- **Assets that may not exist.** Load only files that exist (a missing one is a 404 on every load); check `textures.exists()` and fall back to a texture drawn in code.
+- **Effects over sprites.** Crop generated sprites to their pixel edges before positioning brake lights, flames or other Graphics effects relative to the display size (Pixel Racer, Redline Pursuit).
+- **Code-drawn vehicles/units.** Drive the spawn count from the quantity the sim actually reports for that mode, not from a proxy. Pixelopolis spawned trains from road traffic, so a metro-only city with zero road traffic showed no trains.
+- **Browser tests.** Synthetic pointer input needs `MouseEvent` (a `PointerEvent` alone is ignored) plus `game.scale.updateBounds()`; reach the game instance by walking the React fiber of the canvas's parent ([audit: Browser verification](references/pre-release-audit.md)). Click "Click to load", never "Play now": that is a full page reload.
+- **Game links and SPA navigation**: see "Game Navigation" in `CLAUDE.md` (`reloadDocument` is mandatory).
 
 ## Reference Files
 
-Read these BEFORE working on the relevant feature:
-
-| When working on...                                                                                                                                                                                                                   | Read first                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| Starting a new game, or editing a scene you haven't touched recently                                                                                                                                                                 | [read-before-implement.md](references/read-before-implement.md)               |
-| Pre-merge / pre-release audit, or diagnosing a runtime error                                                                                                                                                                         | [pre-release-audit.md](references/pre-release-audit.md)                       |
-| Deciding whether to extract an FSM / BehaviorManager / TurnManager / WaveManager / CardManager / DialogueManager                                                                                                                     | [game-patterns.md](references/game-patterns.md)                               |
-| Loading ANY spritesheet                                                                                                                                                                                                              | [spritesheets-nineslice.md](references/spritesheets-nineslice.md)             |
-| Nine-slice UI panels                                                                                                                                                                                                                 | [spritesheets-nineslice.md](references/spritesheets-nineslice.md)             |
-| Config, scenes, objects, input, animations                                                                                                                                                                                           | [core-patterns.md](references/core-patterns.md)                               |
-| Tiled tilemaps, collision layers                                                                                                                                                                                                     | [tilemaps.md](references/tilemaps.md)                                         |
-| Physics tuning, groups, pooling                                                                                                                                                                                                      | [arcade-physics.md](references/arcade-physics.md)                             |
-| Scrolling platforms, custom body sizes                                                                                                                                                                                               | [arcade-physics.md](references/arcade-physics.md) (Static vs Dynamic section) |
-| Performance issues, object pooling                                                                                                                                                                                                   | [performance.md](references/performance.md)                                   |
-| Keyboard input, SPACE key, canvas focus                                                                                                                                                                                              | [keyboard-input.md](references/keyboard-input.md)                             |
-| Raycasting (Wolf3D-style FPS), doors, transparent gates, billboard sprites, enemy collision, secret walls, wall-mounted decals, torch lighting, fisheye fix, texture clipping, weapon sprites, enemy animation, level data integrity | [raycasting.md](references/raycasting.md)                                     |
-| Procedural dungeon generation, BSP splitting, corridor carving, door placement, wall-door-wall, level validation                                                                                                                     | [procedural-dungeon-gen.md](references/procedural-dungeon-gen.md)             |
-
----
-
-## Architecture Decisions (Make Early)
-
-**Before building, decide**:
-
-- What **scenes** does this game need? (Boot, Menu, Game, UI overlay, GameOver)
-- What are the **core entities** and how do they interact?
-- What **physics** model fits? (Arcade for speed, Matter for realism, None for menus)
-- What **input methods**? (keyboard/gamepad/touch)
-
-### Physics System Choice
-
-| System     | Use When                                                               |
-| ---------- | ---------------------------------------------------------------------- |
-| **Arcade** | Platformers, shooters, most 2D games. Fast AABB collisions             |
-| **Matter** | Physics puzzles, ragdolls, realistic collisions. Slower, more accurate |
-| **None**   | Menu scenes, visual novels, card games                                 |
-
----
-
-## Core Principles
-
-1. **Scene-first architecture**: Organize code around scene lifecycle and transitions
-2. **Composition over inheritance**: Build entities from sprite/body/controllers, not deep class trees
-3. **Physics-aware design**: Choose collision model early; don't retrofit physics late
-4. **Asset pipeline discipline**: Preload everything; reference by keys; keep loading deterministic
-5. **Frame-rate independence**: Use `delta` for motion and timers; avoid frame counting
-
----
-
-## CRITICAL: Scaled Sprites + Physics Bodies
-
-When textures are larger than display size (e.g. AI-generated assets), `body.setSize()` is multiplied by sprite scale!
-
-**WRONG** — body becomes tiny (5px instead of 80px):
-
-```typescript
-sprite.setDisplaySize(80, 12); // scale = 80/1200 = 0.067
-sprite.body.setSize(80, 12); // actual body = 80 * 0.067 = 5px!
-```
-
-**CORRECT** — use FRAME (texture) size, scale applies automatically:
-
-```typescript
-sprite.setDisplaySize(80, 12);
-const body = sprite.body as Phaser.Physics.Arcade.Body;
-body.setSize(sprite.frame.width, sprite.frame.height); // body = 1200 * 0.067 = 80px ✓
-```
-
-For **static bodies** (bricks, platforms), also call `updateFromGameObject()`:
-
-```typescript
-brick.setDisplaySize(40, 16);
-const body = brick.body as Phaser.Physics.Arcade.StaticBody;
-body.setSize(brick.frame.width, brick.frame.height);
-body.updateFromGameObject(); // REQUIRED for static bodies!
-```
-
-### CRITICAL: Arcade physics bodies CANNOT rotate
-
-`setAngle()` / `setRotation()` rotates the VISUAL sprite only. The physics body stays axis-aligned (AABB). This means rotated wall sprites have wrong collision shapes.
-
-**WRONG** — body stays 64×32 horizontal even though sprite is rotated 90°:
-
-```typescript
-wall.setAngle(90);
-wall.body.setSize(64, 32); // still horizontal!
-```
-
-**CORRECT** — separate visual from collision:
-
-```typescript
-// Visual only (no physics)
-this.add.image(x, y, "wall").setAngle(90);
-
-// Invisible collision zone
-const zone = this.add.zone(x, y, 16, span);
-this.physics.add.existing(zone, true); // static body
-wallGroup.add(zone);
-```
-
-### Obstacle collision groups pattern
-
-Split obstacles into separate StaticGroups when different entities need different collision rules:
-
-```typescript
-this.walls = this.physics.add.staticGroup(); // invisible zones
-this.trees = this.physics.add.staticGroup(); // visible + physics
-
-// Walls block player only (enemies walk through to enter arena)
-this.physics.add.collider(this.player, this.walls);
-// Trees block everyone
-this.physics.add.collider(this.player, this.trees);
-this.physics.add.collider(this.enemyPool, this.trees);
-```
-
-### CRITICAL: Keyboard input — canvas focus problem
-
-**Read [keyboard-input.md](references/keyboard-input.md) for the full solution.**
-
-Phaser's keyboard only works when canvas has focus. When embedded in a React page, canvas loses focus constantly (user clicks tabs, buttons, scrolls). `keyboard.target: window` alone does NOT fix this.
-
-**Required**: Window-level capture-phase listener that re-focuses canvas + re-dispatches the event. Plus `addCapture(SPACE)` in each scene that uses SPACE.
-
----
-
-## Graphics Overlays on Sprites (Brake Lights, Flames, Effects)
-
-When drawing Graphics effects (brake lights, nitro flames, etc.) on top of sprite-based game objects:
-
-### Sprite canvas ≠ car body
-
-AI-generated sprites have transparent padding — the visible content is smaller than the PNG canvas. Always **crop sprites first** (`process_sprite` with auto-crop) so the PNG edges match the pixel art edges. Otherwise, effects positioned at `halfW`/`halfH` will float outside the visible car.
-
-### Coordinate alignment
-
-After `g.translateCanvas(x, y)` + `g.rotateCanvas(angle)`, the local coordinate origin is the sprite center. Position effects relative to the **display size** (which maps to cropped sprite edges):
-
-```typescript
-const halfW = CAR_DRAW_W / 2;
-const halfH = CAR_DRAW_H / 2;
-// Brake lights at rear corners (car body is ~55% of canvas width)
-const sideX = halfW * 0.38; // actual car edge, NOT halfW
-const rearY = halfH - 4; // just inside rear edge
-```
-
-### Multi-layer effects look better
-
-- **Brake lights**: outer glow circle (large, low alpha) + inner 2×2px rect (bright)
-- **Nitro flame**: 3 layers — outer (orange), mid (yellow), core (white-yellow) with sin-based flicker
-- **Dual exhaust**: 2 separate small flames with independent flicker phases
-
-### Sprite rotation offset
-
-If a sprite faces south but `angle=0` means north: add `Math.PI` to sprite rotation, but keep Graphics `rotateCanvas(car.angle)` as-is (Graphics follow physics convention, sprite gets the visual flip).
-
----
-
-## Anti-Patterns
-
-| Anti-Pattern                                         | Problem                                                     | Solution                                                                                                  |
-| ---------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Global state on `window`                             | Scene transitions break state                               | Use scene data, registries                                                                                |
-| Loading in `create()`                                | Assets not ready when referenced                            | Load in `preload()`, use Boot scene                                                                       |
-| Frame counting                                       | Game speed varies with FPS                                  | Use `delta / 1000`                                                                                        |
-| Matter for simple collisions                         | Unnecessary complexity                                      | Arcade handles most 2D games                                                                              |
-| One giant scene                                      | Hard to extend                                              | Separate gameplay/UI/menus                                                                                |
-| Magic numbers                                        | Impossible to balance                                       | Config objects, constants                                                                                 |
-| No object pooling                                    | GC stutters                                                 | Groups with `setActive(false)`                                                                            |
-| `body.setSize(displayW, displayH)` on scaled sprites | Body is multiplied by scale → tiny                          | Use `body.setSize(frame.width, frame.height)`                                                             |
-| StaticBody + `setSize()` + `updateFromGameObject()`  | `updateFromGameObject()` overwrites custom size every frame | Use immovable dynamic body (`setImmovable(true)`) — see [arcade-physics.md](references/arcade-physics.md) |
-| `setAngle()` on physics sprites                      | Visual rotates but body stays axis-aligned (AABB)           | Use invisible zones for collision, sprites for visual only                                                |
-| Constant `setAlpha(0.5)` for invincibility           | Character looks broken/ghostly                              | Use blink tween (`alpha 1↔0.3, duration 80, yoyo`)                                                        |
-| Loading non-existent sprites in `preload()`          | Silent 404 errors on every game load                        | Only load files that exist; use `!textures.exists()` + programmatic fallback in `create()`                |
-| 2500 individual `add.image()` for tile grid          | 2500 game objects = slow                                    | Use `RenderTexture` — draw all tiles onto one texture                                                     |
-
----
-
-## Variation Guidance
-
-Outputs should vary based on:
-
-- **Genre** (platformer vs top-down vs shmup)
-- **Target platform** (mobile touch, desktop keyboard, gamepad)
-- **Art style** (pixel art scaling vs HD smoothing)
-- **Performance envelope** (many sprites → pooling; few sprites → simpler code)
-
----
-
-## Remember
-
-Phaser provides powerful primitives—scenes, sprites, physics, input—but **architecture is your responsibility**.
-
-Think in systems: define the scenes, define the entities, define their interactions—then implement.
-
-**Codex can build complete, polished Phaser games. These guidelines illuminate the path—they don't fence it.**
+| When working on…                                                                                     | Read first                                                        |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Starting a new game, or editing a scene you haven't touched recently                                 | [read-before-implement.md](references/read-before-implement.md)   |
+| Pre-merge / pre-release audit, diagnosing a runtime error, browser-testing a game                    | [pre-release-audit.md](references/pre-release-audit.md)           |
+| Deciding whether to extract an FSM / TurnManager / WaveManager / CardManager / DialogueManager       | [game-patterns.md](references/game-patterns.md)                   |
+| Loading any spritesheet, nine-slice UI panels                                                        | [spritesheets-nineslice.md](references/spritesheets-nineslice.md) |
+| Keyboard input, SPACE key, `addCapture`, duplicate keydowns                                          | [keyboard-input.md](references/keyboard-input.md)                 |
+| Raycasting (Wolf3D-style FPS): doors, billboards, decals, lighting, weapon sprites, level data       | [raycasting.md](references/raycasting.md)                         |
+| Procedural dungeon generation: BSP, corridors, door placement, level validation                      | [procedural-dungeon-gen.md](references/procedural-dungeon-gen.md) |
