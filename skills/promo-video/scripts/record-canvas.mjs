@@ -5,6 +5,7 @@
 //
 // Plan:
 //   { "url": "https://example.com/play", "name": "level1", "viewport": [1600, 1000], "dpr": 1, "fps": 60,
+//     "allow": ["cdn.example.net"],     optional; extra hosts (and their subdomains) the page may load from
 //     "canvas": "canvas#game",          optional; default: the largest <canvas> on the page
 //     "setup": [ ...steps ],            run before the canvas is located (cookie banner, start screen)
 //     "focus": true,                    click the canvas centre once before "steps" (default true)
@@ -14,6 +15,8 @@
 //        {"clickText": "regex"} {"clickSel": "css"} {"waitFor": "css"}
 //        {"rec": "start"|"stop"} {"shot": name} {"repeat": n, "steps": [...]}
 // Key names are Puppeteer's (ArrowUp, Space, Enter, KeyW, BracketRight, "1").
+// Network: only the plan URL's host (www. stripped) and the "allow" hosts load, each with its subdomains; every
+// other request is aborted and listed at the end. Add a host to "allow" only once the user confirms it is the product's.
 import fs from 'node:fs';
 import path from 'node:path';
 import { launch, sleep, clickText } from './browser.mjs';
@@ -30,6 +33,20 @@ await page.setViewport({ width: vw, height: vh, deviceScaleFactor: plan.dpr || 1
 const log = [];
 page.on('pageerror', (e) => log.push('pageerror: ' + e.message));
 page.on('console', (m) => { if (m.type() === 'error') log.push('console: ' + m.text().slice(0, 200)); });
+
+const hosts = [new URL(plan.url).hostname, ...(plan.allow || [])].map((h) => h.toLowerCase().replace(/^www\./, ''));
+const allowed = (u) => {
+  if (u.startsWith('data:') || u.startsWith('blob:')) return true;
+  const { protocol, hostname } = new URL(u);
+  return /^https?:$/.test(protocol) && hosts.some((h) => hostname === h || hostname.endsWith('.' + h));
+};
+const blocked = new Set();
+await page.setRequestInterception(true);
+page.on('request', (r) => {
+  if (allowed(r.url())) return r.continue();
+  blocked.add(new URL(r.url()).host);
+  r.abort('blockedbyclient');
+});
 
 // Mirror every WebAudio connection to the speakers into a MediaStream that MediaRecorder can take.
 await page.evaluateOnNewDocument(() => {
@@ -51,7 +68,11 @@ await page.evaluateOnNewDocument(() => {
 const file = path.join(outDir, plan.name + '.webm');
 const out = fs.createWriteStream(file);
 await page.exposeFunction('__chunk', (b64) => { out.write(Buffer.from(b64, 'base64')); });
-await page.goto(plan.url, { waitUntil: 'networkidle2', timeout: 60000 });
+await page.goto(plan.url, { waitUntil: 'networkidle2', timeout: 60000 }).catch((e) => {
+  // a redirect off the allowed hosts (a parked domain, an ad bounce) lands here: stop rather than follow it
+  if (blocked.size) throw new Error(`${plan.url} did not load; blocked hosts: ${[...blocked].join(', ')}`);
+  throw e;
+});
 
 let canvas, bb;
 const locate = async () => {
@@ -127,4 +148,5 @@ if (recording) await stopRec();
 await new Promise((r) => out.end(r));
 console.log(plan.name, '→', path.relative(process.cwd(), file), (fs.statSync(file).size / 1e6).toFixed(1), 'MB, audio:', await page.evaluate(() => window.__audio ?? null));
 for (const l of log.slice(0, 8)) console.log('  ', l);
+if (blocked.size) console.log('   blocked hosts (not loaded):', [...blocked].join(', '));
 await browser.close();

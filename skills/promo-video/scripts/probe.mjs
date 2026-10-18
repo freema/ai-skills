@@ -20,7 +20,7 @@ const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
 // range requests matter: Chrome will not seek a <video> served without them
 const server = http.createServer((req, res) => {
   const p = path.join(root, decodeURIComponent(req.url.split('?')[0]).replace(/^\/$/, '/index.html'));
-  if (!p.startsWith(root) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { res.writeHead(404); return res.end(); }
+  if (!p.startsWith(root + path.sep) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { res.writeHead(404); return res.end(); }
   const size = fs.statSync(p).size;
   const type = types[path.extname(p)] || 'application/octet-stream';
   const range = /bytes=(\d+)-(\d*)/.exec(req.headers.range || '');
@@ -45,7 +45,16 @@ const errors = [];
 page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) errors.push(`${m.type()}: ${m.text()}`); });
 page.on('pageerror', (e) => errors.push('pageerror: ' + (e.stack || e.message)));
 page.on('response', (r) => { if (r.status() >= 400) errors.push(r.status() + ' ' + r.url()); });
-await page.goto(`http://localhost:${server.address().port}/index.html`, { waitUntil: 'load' });
+// the composition is self-contained (vendored GSAP and fonts): anything off this server is a bug, not an asset to fetch
+const origin = `http://localhost:${server.address().port}`;
+await page.setRequestInterception(true);
+page.on('request', (r) => {
+  const u = r.url();
+  if (u.startsWith(origin + '/') || u.startsWith('data:') || u.startsWith('blob:')) return r.continue();
+  errors.push('blocked off-host request: ' + u.slice(0, 200));
+  r.abort('blockedbyclient');
+});
+await page.goto(`${origin}/index.html`, { waitUntil: 'load' });
 const ok = await page.waitForFunction((id) => !!(window.__timelines && window.__timelines[id]), { timeout: 20000, polling: 100 }, id).then(() => true, () => false);
 const dur = ok ? await page.evaluate((id) => window.__timelines[id].duration(), id) : null;
 console.log(`timeline "${id}" registered:`, ok, ok ? `${dur.toFixed(3)} s (data-duration ${attr('duration', '?')})` : '');

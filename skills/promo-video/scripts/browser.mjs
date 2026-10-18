@@ -1,9 +1,9 @@
 // Shared helper for the headless-Chrome scripts (probe.mjs, record-canvas.mjs, your own capture scripts).
 // Finds puppeteer-core and a chrome-headless-shell without adding a package.json to the video project:
 //   puppeteer-core: PUPPETEER_CORE (a puppeteer-core directory), else one resolvable from the project
-//     (npm i -D puppeteer-core), else the copy that `npx hyperframes` installed into the npx cache
+//     (npm i -D puppeteer-core), else the copy that hyperframes@0.8.111 installed into ~/.npm/_npx
 //   browser: CHROME_PATH or HYPERFRAMES_BROWSER_PATH, else the newest chrome-headless-shell in HyperFrames' cache
-//     (~/.cache/hyperframes/chrome, filled by `npx hyperframes browser ensure`), else in ~/.cache/puppeteer
+//     (~/.cache/hyperframes/chrome, filled by `npx -y hyperframes@0.8.111 browser ensure`), else in ~/.cache/puppeteer
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -27,7 +27,7 @@ function findPuppeteer() {
   // prefer the hyperframes install, then the newest puppeteer-core
   const version = (d) => JSON.parse(fs.readFileSync(path.join(d, 'puppeteer-core', 'package.json'), 'utf8')).version;
   withPpt.sort((a, b) => (fs.existsSync(path.join(b, 'hyperframes')) - fs.existsSync(path.join(a, 'hyperframes'))) || newer(version(a), version(b)));
-  if (!withPpt.length) throw new Error('puppeteer-core not found: run `npx hyperframes@<version> --help` once, `npm i -D puppeteer-core`, or set PUPPETEER_CORE');
+  if (!withPpt.length) throw new Error('puppeteer-core not found: run `npx -y hyperframes@0.8.111 --help` once, `npm i -D puppeteer-core`, or set PUPPETEER_CORE');
   return createRequire(path.join(withPpt[0], 'noop.js'))('puppeteer-core');
 }
 
@@ -46,7 +46,7 @@ function findChrome() {
       }
     }
   }
-  throw new Error('chrome-headless-shell not found: run `npx hyperframes browser ensure`, or set CHROME_PATH');
+  throw new Error('chrome-headless-shell not found: run `npx -y hyperframes@0.8.111 browser ensure`, or set CHROME_PATH');
 }
 
 export const chromePath = () => findChrome();

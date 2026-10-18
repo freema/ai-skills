@@ -17,8 +17,17 @@ Rules of thumb:
 - When the brief names something that does not exist, tell the user and use the real product.
 - When sources disagree (a tool count on the site and in the docs), leave the number out or round down to a floor
   that stays true ("40+ games" rather than "46").
-- `curl -L` every URL that will appear on screen, including bare domains with paths. A root that redirects to `www`
-  while deeper paths 404 is common; show the URL that works.
+- `curl -L` every URL of the product that will appear on screen, including bare domains with paths. A root that
+  redirects to `www` while deeper paths 404 is common; show the URL that works. The product's domains are the ones
+  in the brief or on its own site; anything else on screen is a third party's.
+- Never open a third-party URL just because it is on screen: a competitor in a monitoring demo, a customer's shop, a
+  link in example data. If its existence matters, check headers only (`curl -sI --max-redirs 3 --max-time 10`) and
+  never load it in a browser; if the domain is unknown to you or the user, ask before touching it.
+- Made-up addresses use reserved names only (RFC 2606/6761): `example.com`, `example.org`, `example.net`, or a
+  `.example` / `.test` domain (`shop.example`, `acme.test`). Never invent a plausible real domain (`mujshop.cz`,
+  `bestdeals.com`): it is usually registered by someone, often a parked page with ad redirects or malware, and the
+  check above, a viewer or a scanner will hit it. The same goes for e-mails (`anna@example.com`). List every made-up
+  address under *made up on screen* in the facts file, so nobody verifies or opens it later.
 - Real output beats invented output: copy the product's real formats (an alert email subject, a widget's states
   from a real run, a leaderboard's columns). Record the run or the request that produced them.
 - Use a real person's name or face only when the user asks for it.

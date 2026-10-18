@@ -10,15 +10,15 @@ Adapted from OpenGame's `debug-skill/seed-protocol`. Keys are renamed to match P
 
 Use these to **diagnose a reported error**. Each row: what you see → where to look → what to fix.
 
-| #   | Stage   | Signal                                                                | Root cause                                                                                                                                                                          | Where to look                                                                                                     |
+| # | Stage | Signal | Root cause | Where to look |
 | --- | ------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| R1  | build   | `TS2307 Cannot find module '...'`                                     | Wrong `../` depth, or path typo. `~/` alias works only where Vite/TSConfig is configured (app/).                                                                                    | Count `../` from importing file; prefer `~/` alias when crossing `app/` subtree                                   |
-| R2  | build   | `TS2339 Property 'X' does not exist on type 'Y'`                      | Property removed/renamed in type def, or accessing a member that was never declared.                                                                                                | Open the type/class definition; fix the access or add the declaration                                             |
-| R3  | runtime | `TypeError: Cannot read properties of undefined`                      | Object used before construction in `create()`, or scene accessed after `scene.stop()`.                                                                                              | Reorder statements so init happens before access; guard with `this.scene.isActive()` if reading from paused scene |
-| R4  | runtime | `Texture key "X" not found` (or blank/pink sprite)                    | Texture key used in `this.add.image(key)` / `this.anims.create({ key })` was never preloaded.                                                                                       | Grep the key in `scenes/boot.ts`; check spelling, missing frame suffix, or asset path typo                        |
-| R5  | runtime | `Animation key "X" does not exist`                                    | `.play("X")` called before `anims.create({ key: "X" })`, or anim created in a different scene with a key the current scene can't see (anims are global — check registration order). | Ensure `anims.create()` runs in Boot preload/create before any gameplay scene starts                              |
-| R6  | runtime | `Scene key "X" not found` on `scene.start("X")` / `scene.launch("X")` | Target scene not listed in the `scene: [...]` array returned by `getXxxConfig()`.                                                                                                   | Add the import + include the class in the scene array of `config.ts`                                              |
-| R7  | runtime | `RangeError: Maximum call stack size exceeded`                        | Infinite recursion or circular scene transition (A starts B, B starts A, neither stops first).                                                                                      | Trace the call chain; add a guard flag or `this.scene.stop()` before `start()`                                    |
+| R1 | build | `TS2307 Cannot find module '...'` | Wrong `../` depth, or path typo. `~/` alias works only where Vite/TSConfig is configured (app/). | Count `../` from importing file; prefer `~/` alias when crossing `app/` subtree |
+| R2 | build | `TS2339 Property 'X' does not exist on type 'Y'` | Property removed/renamed in type def, or accessing a member that was never declared. | Open the type/class definition; fix the access or add the declaration |
+| R3 | runtime | `TypeError: Cannot read properties of undefined` | Object used before construction in `create()`, or scene accessed after `scene.stop()`. | Reorder statements so init happens before access; guard with `this.scene.isActive()` if reading from paused scene |
+| R4 | runtime | `Texture key "X" not found` (or blank/pink sprite) | Texture key used in `this.add.image(key)` / `this.anims.create({ key })` was never preloaded. | Grep the key in `scenes/boot.ts`; check spelling, missing frame suffix, or asset path typo |
+| R5 | runtime | `Animation key "X" does not exist` | `.play("X")` called before `anims.create({ key: "X" })`, or anim created in a different scene with a key the current scene can't see (anims are global — check registration order). | Ensure `anims.create()` runs in Boot preload/create before any gameplay scene starts |
+| R6 | runtime | `Scene key "X" not found` on `scene.start("X")` / `scene.launch("X")` | Target scene not listed in the `scene: [...]` array returned by `getXxxConfig()`. | Add the import + include the class in the scene array of `config.ts` |
+| R7 | runtime | `RangeError: Maximum call stack size exceeded` | Infinite recursion or circular scene transition (A starts B, B starts A, neither stops first). | Trace the call chain; add a guard flag or `this.scene.stop()` before `start()` |
 
 ---
 
@@ -140,12 +140,12 @@ grep -E "slug:|width:|height:" app/games/registry.ts
 
 **Presets** (see `tasks/34-standardize-game-viewports.md`):
 
-| Preset     | Dimensions | Ratio | Use when                                                   |
+| Preset | Dimensions | Ratio | Use when |
 | ---------- | ---------- | ----- | ---------------------------------------------------------- |
-| `STD`      | 960×720    | 1.33  | Default — cards, arcade, action, single-screen puzzles     |
-| `WIDE`     | 1280×720   | 1.78  | TD, dungeon crawlers, racing, big-camera games             |
-| `PORTRAIT` | 540×960    | 0.56  | Phone-in-hand games; always pair with `mobileWidth/Height` |
-| `SQUARE`   | 720×720    | 1.00  | Only when gameplay truly needs square (tight grid puzzles) |
+| `STD` | 960×720 | 1.33 | Default — cards, arcade, action, single-screen puzzles |
+| `WIDE` | 1280×720 | 1.78 | TD, dungeon crawlers, racing, big-camera games |
+| `PORTRAIT` | 540×960 | 0.56 | Phone-in-hand games; always pair with `mobileWidth/Height` |
+| `SQUARE` | 720×720 | 1.00 | Only when gameplay truly needs square (tight grid puzzles) |
 
 When adding `mobileWidth/mobileHeight` per task 33, **also** check desktop ratio — opting a square game into the viewport helper without promoting desktop to STD/WIDE still letterboxes. Align the mobile variant to `PORTRAIT` (540×960) unless there's a reason not to.
 
@@ -175,13 +175,13 @@ We don't have Base scenes yet, but when we do — this rule kicks in immediately
 
 ## When to run this checklist
 
-| Situation                                                   | Run                                                                                                                 |
+| Situation | Run |
 | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Adding a new game                                           | Full list (all R + P rules) before first merge to main                                                              |
-| Touching a game's `config.ts` or `scenes/boot.ts`           | P1, P2                                                                                                              |
-| Touching `registry.ts` or adding mobile/fullscreen variants | P9 (desktop ratio) + P8 (restart guard)                                                                             |
-| Refactoring shared `app/games/shared/`                      | P2, P7, P8 on every consumer                                                                                        |
-| Before `git tag vX.Y.Z`                                     | Full P1–P9 plus `task test` + `task lint` + `task format:check` (per memory `feedback-format-check-before-release`) |
-| After receiving a user bug report                           | Scan R1–R7 for the signature, then do the relevant P check                                                          |
+| Adding a new game | Full list (all R + P rules) before first merge to main |
+| Touching a game's `config.ts` or `scenes/boot.ts` | P1, P2 |
+| Touching `registry.ts` or adding mobile/fullscreen variants | P9 (desktop ratio) + P8 (restart guard) |
+| Refactoring shared `app/games/shared/` | P2, P7, P8 on every consumer |
+| Before `git tag vX.Y.Z` | Full P1–P9 plus `task test` + `task lint` + `task format:check` (per memory `feedback-format-check-before-release`) |
+| After receiving a user bug report | Scan R1–R7 for the signature, then do the relevant P check |
 
 Record any novel recurring bug pattern as a new rule here — this file is the project's living debug protocol.
