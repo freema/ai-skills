@@ -1,0 +1,17 @@
+# SkillSpector suppressions for skills/mac-maintenance, reviewed by hand (see README "Security scanning").
+# Only fully spelled-out cache paths are accepted; a bare "rm -rf ~" match stays active.
+version: 2
+rules:
+  - id: TM1
+    message: "rm -rf *Library/Caches/JetBrains*"
+    reason: documented cache cleanup, run only after the user approves the scan report
+  - id: TM1
+    message: "rm -rf *Library/Developer/Xcode/DerivedData*"
+    reason: documented Xcode build-products cleanup, run only after the user approves
+  - id: TM1
+    message: "rm -rf *Library/Developer/CoreSimulator/Caches*"
+    reason: documented simulator-cache cleanup, run only after the user approves
+  - id: RA1
+    path: references/cleanup-targets.md
+    message: "self-update"
+    reason: refers to package managers' own self-update commands, not the skill modifying itself

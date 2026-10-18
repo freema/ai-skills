@@ -1,0 +1,25 @@
+# SkillSpector suppressions for skills/pixellab-api, reviewed by hand (see README "Security scanning").
+version: 2
+rules:
+  - id: PE3
+    path: tools/pixellab.sh
+    message: "*.env*"
+    reason: pixellab.sh reads PIXELLAB_API_KEY from .env and only sends it to api.pixellab.ai
+  - id: PE3
+    path: SKILL.md
+    message: "Get API key from*"
+    reason: setup instruction telling the user where to create their own key
+  - id: SC2
+    path: tools/pixellab.sh
+    message: "curl -sf *$API/*"
+    reason: JSON API calls to $API (api.pixellab.ai); the response is parsed with python json, never executed
+  - id: E1
+    path: tools/pixellab.sh
+    message: "*$API/*"
+    reason: the PixelLab API is the skill's purpose
+  - id: E1
+    message: "https://api.pixellab.ai/*"
+    reason: the PixelLab API base URL
+  - id: LP3
+    path: SKILL.md
+    reason: no MCP tools to declare; allowed-tools would grant tools, not restrict them
