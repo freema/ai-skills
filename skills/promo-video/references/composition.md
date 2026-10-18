@@ -20,7 +20,7 @@ Checked with HyperFrames 0.8.111 and GSAP 3.14.2. Re-check the CLI's `--help` af
   threw under `check`.
 - `lint` warns `nested_structure_needs_subcomposition` for a single-file video with a nested stage. That warning is
   fine; splitting into sub-compositions buys nothing for a 30 s piece.
-- Run the CLI pinned: `npx -y hyperframes@<version>`, with `HYPERFRAMES_NO_TELEMETRY=1` and
+- Run the CLI pinned: `npx -y hyperframes@0.8.111` (the version in SKILL.md), with `HYPERFRAMES_NO_TELEMETRY=1` and
   `HYPERFRAMES_SKIP_SKILLS=1` (skips the GitHub skills update check).
 
 ## Time
