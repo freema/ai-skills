@@ -1,6 +1,6 @@
 # Arcade Physics Deep Dive
 
-Comprehensive reference for Phaser 3 Arcade Physics system.
+Comprehensive reference for the Phaser 4 Arcade Physics system.
 
 ## World Configuration
 
