@@ -161,6 +161,19 @@
       "license": "MIT",
       "keywords": ["video", "promo-video", "trailer", "hyperframes", "gsap", "voiceover", "captions", "loudness"],
       "category": "development"
+    },
+    {
+      "name": "usage-statusline",
+      "source": "./skills/usage-statusline",
+      "description": "Claude Code status line — model, context fill as a coloured bar with tokens used, and on Pro/Max plans the 5-hour and 7-day usage with time until each limit resets. One install script sets it up on any machine.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["statusline", "context", "usage", "rate-limits", "claude-code"],
+      "category": "system"
     }
   ]
 }
