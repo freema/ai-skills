@@ -1,0 +1,7 @@
+# SkillSpector suppressions for skills/phaser-gamedev, reviewed by hand (see README "Security scanning").
+version: 2
+rules:
+  - id: AE1
+    path: SKILL.md
+    message: "references/*.md (partial)"
+    reason: static parser span limit on long reference docs (code-heavy markdown), not evasion; the docs are reviewed in the repo
