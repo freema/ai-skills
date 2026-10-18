@@ -26,12 +26,31 @@ values in the README, not the targets.
   continuous, and saves the MP3 plus character timings. `--dry-run` shows the request without sending it.
 - A free-tier key (observed 2026-10) returned only `mp3_44100_128` and could not list voices or models: pass a
   premade voice ID directly. Premade voices used so far: Jessica `cgSgspJ2msm6clMCkdW9` (speed 1.1), Sarah
-  `EXAVITQu4vr4xnSDxMaL` (speed 1.08). Ask the user whether they want a female or male voice.
+  `EXAVITQu4vr4xnSDxMaL` (speed 1.08).
+- **Pick the voice by ear, on the real script.** Offer 3–4 candidates that suit the product and the language, and
+  run `node scripts/voice-test.mjs` (or `--lines l1,l5` for the lines with the hard words, `--voices name:id,…` for
+  other candidates): it reads the same lines with each voice, using the script's model and settings, into
+  `audio/voice-test/<name>.mp3`. Hand the user the files, not the voice library's generic previews; a voice that
+  sounds good on a demo sentence can stumble over a brand name. `--dry-run` prints the credits first.
+
+  | Voice | ID | Used for |
+  |---|---|---|
+  | Sarah | `EXAVITQu4vr4xnSDxMaL` | two English product spots (speed 1.05–1.08) |
+  | Jessica | `cgSgspJ2msm6clMCkdW9` | an English product spot and a how-to (speed 1.1) |
+  | Daniel | `onwK4e9ZLuTAKqWW03F9` | a Czech spot as a provisional voice, with an English accent (speed 1.1) |
+  | George | `JBFqnCBsd6RMkjVDRZzb` | tested for that Czech spot, not chosen |
+
+  Record the chosen voice, model and settings in the README.
 - **Native voices for other languages** (Czech, for example) live in the Voice Library, and a free-tier key gets
   HTTP 402 "Free users cannot use library voices via the API" for them. Premade voices read those languages through
   `eleven_multilingual_v2`, with an accent. Keep a premade voice as a provisional take, say so in the README, and
-  leave the paid upgrade to the user. Keep a small voice-test script that reads two or three test lines with the
-  candidate library voices, so the switch after an upgrade is one run plus a rebuild from `tts.mjs` on.
+  leave the paid upgrade to the user. Czech library voices picked on 2026-10-06 (most used with `language=cs`; not heard yet,
+  the free key got 402):
+  Jan `KIDKfqJyZ6ASuyzsKfh5`, Anet `MpbYQvoTmXjHkaxtLiSh`, Zdeněk `vP4R9CqQI4q0HlVrXJWj`. After an upgrade,
+  `voice-test.mjs --voices jan:KIDKfqJyZ6ASuyzsKfh5,…` and a rebuild from `tts.mjs` on is the whole switch.
+- **Cost.** `eleven_multilingual_v2` bills one credit per character, Flash and Turbo models half of that (check
+  the current pricing page). A 30 s spot came to 340–430 characters; a voice test with four voices and two lines
+  costs about as much as one take; a `--line` re-take costs that line. Write the credits actually used into the README.
 - `build_vo.py` assigns spoken words to lines, cuts each line out of the take with a little pre-roll and decay,
   re-spaces the lines (`head`, per-line `gap_after`, `tail`), runs a light chain (75 Hz high-pass, gentle
   compression) and masters the stem to −14 LUFS / −1 dBTP. It writes `audio/vo/timing.json` and

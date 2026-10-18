@@ -68,6 +68,8 @@ Every video project gets a README with:
 - **Sources and licenses:** every asset with its source and license or permission (fonts OFL, icons ISC, GSAP's
   license, music license terms, the user's OK for generated art and the date).
 - **Loudness:** a table of targets and measured values, including the test AAC encode.
+- **Cost:** ElevenLabs credits used (take, re-takes, voice test) and any paid asset, so the next video can be
+  quoted up front.
 - **Rebuild:** the exact commands, in order.
 - **Status:** "rendered locally" until the user posts it. A render is not a publication, and a platform draft is not
   a published post.
