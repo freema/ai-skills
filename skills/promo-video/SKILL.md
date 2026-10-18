@@ -48,16 +48,18 @@ Both: true peak ≤ −1 dBTP after a test AAC encode, 1920×1080, 60 fps, an en
 
 Requirements: Node 22+, Python 3 with numpy, ffmpeg with libx264, libvpx and libopus. HyperFrames runs through
 `npx`; the browser scripts reuse the puppeteer-core it installs and its chrome-headless-shell
-(`npx hyperframes browser ensure` downloads one). Tested with HyperFrames 0.8.111, GSAP 3.14.2, ffmpeg 8.1,
-Python 3.9, numpy 2.0.
+(`npx -y hyperframes@0.8.111 browser ensure` downloads one). Tested with HyperFrames 0.8.111, GSAP 3.14.2,
+ffmpeg 8.1, Python 3.9, numpy 2.0.
 
 ## Workflow
 
 1. **Brief and facts.** Before writing a word of script, check every product name, number and claim against the
    product's own sources (site, docs, code) and keep a facts file next to the project: claim → source, a
    *made up on screen* list (example data, names, compressed timing), and a *don't claim* list. When sources
-   disagree, leave the number out or round it to something that stays true ("40+ games"). Open every URL that will
-   appear on screen with `curl -L`. See `references/story.md`.
+   disagree, leave the number out or round it to something that stays true ("40+ games"). Open every URL of the
+   product that will appear on screen with `curl -L`; never open a third party's (competitors, shops, links in
+   example data). Made-up URLs and e-mails use `example.com` or a `.test` domain only, never a real-looking one.
+   See `references/story.md`.
 2. **Ask only the decisions that are the user's**: where the video will live (homepage with sound, feed autoplay,
    ad), voice or music-led, which claims to make, permission to use generated or third-party assets, any real person's
    name on screen. Decide the rest yourself and write the decisions down. For a client, pitch 3–4 concepts and
@@ -123,6 +125,11 @@ Details and the migration steps are in `references/projects.md`.
 - **A local render is not a publication.** Never run `hyperframes publish`, upload, or post without the user's
   explicit go-ahead for that destination. Record a platform, date and URL only after the post is live and you
   have opened it.
+- **Network stays narrow.** The skill reaches jsDelivr (GSAP and Inter, checked against SHA-256 in
+  `new-project.sh`), the ElevenLabs API, and the product's own domains. `probe.mjs` blocks every request that is not
+  the local composition; `record-canvas.mjs` only loads the plan URL's host plus the hosts listed in its `allow`.
+  Do not widen either to make a page load; add a host to `allow` only after the user confirms it belongs to the
+  product. Made-up addresses use `example.com` or `.test` (`references/story.md`).
 - **No invented facts.** No player counts, revenue, ratings, testimonials, endorsements or competitor claims you
   cannot source. Example data is labelled as made up in the README. Do not put words in a third party's mouth
   (an AI assistant's answer, a customer quote); show placeholders instead.
