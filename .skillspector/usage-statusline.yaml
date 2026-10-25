@@ -1,0 +1,16 @@
+# SkillSpector suppressions for skills/usage-statusline, reviewed by hand (see README "Security scanning").
+# Each rule is scoped to one rule id, one file and the matched text, so a new finding elsewhere stays active.
+version: 2
+rules:
+  - id: AS1
+    path: SKILL.md
+    message: "*~/.claude/*"
+    reason: the skill's purpose is installing a Claude Code status line; SKILL.md tells the user which files the installer writes
+  - id: AS1
+    path: scripts/install.sh
+    message: "*~/.claude/*"
+    reason: the installer copies the script to ~/.claude/usage-statusline.sh and sets statusLine in ~/.claude/settings.json after a backup; no other key is read or written
+  - id: AE1
+    path: SKILL.md
+    message: "scripts/statusline.sh (partial)"
+    reason: static parser span limit on the long jq expression in statusline.sh, not evasion; the script reads only the status line JSON on stdin and makes no network calls
