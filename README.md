@@ -64,6 +64,10 @@ ai-skills/
 │   └── marketplace.json       # Claude Code marketplace manifest
 ├── .cursor-plugin/
 │   └── marketplace.json       # Cursor IDE marketplace manifest
+├── .github/workflows/
+│   └── validate-skills.yml    # skill-validator, agnix and SkillSpector on every PR
+├── .skillspector/
+│   └── <skill>.yaml           # reviewed SkillSpector suppressions, one file per skill
 ├── skills/
 │   ├── phaser-gamedev/
 │   │   ├── SKILL.md           # Phaser 3 game dev skill
@@ -102,6 +106,23 @@ alwaysApply: false
 # Rule content in markdown
 ```
 
+## Security scanning
+
+Every skill is scanned with [SkillSpector](https://github.com/NVIDIA/skillspector), NVIDIA's security scanner for
+agent skills, on each pull request and push to `main` that touches `skills/`. It runs static analysis
+(`--no-llm`): prompt injection, data exfiltration, credential access, supply-chain patterns, hidden text and
+dangerous commands. A skill whose risk score goes above 50 fails CI; findings show up in the job summary and in the
+repository's Code scanning tab.
+
+Some findings are expected for what a skill does: a script reading its own API key from `.env`, an `ffmpeg`
+subprocess, a cleanup skill's `rm -rf` of a cache directory. Those are reviewed by hand and suppressed in
+[`.skillspector/<skill>.yaml`](.skillspector/) with a reason, each rule scoped to one rule id, one file and the
+matched text, so a new finding stays active. The scanner is pinned to a release commit in
+[`validate-skills.yml`](.github/workflows/validate-skills.yml).
+
+What a scan does not do: it never runs the skill, and a passing score is not a guarantee. Read a skill's scripts
+before you install it, especially the ones that reach the network.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full details including local validation setup.
@@ -109,7 +130,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full details including local validati
 1. Fork this repository
 2. Add your skill directory under `skills/<skill-name>/`
 3. Create `SKILL.md` with frontmatter (name + description)
-4. Run validators locally: `skill-validator check --strict skills/<skill-name>/` and `agnix --target claude-code --strict skills/<skill-name>/`
+4. Run validators locally: `skill-validator check --strict skills/<skill-name>/`, `agnix --target claude-code --strict skills/<skill-name>/` and `skillspector scan --no-llm skills/<skill-name>/`
 5. Submit a pull request — CI validates automatically
 
 ## License

@@ -64,11 +64,20 @@ EOF
 
 ## Made up on screen
 
+<!-- example data, names, compressed timing; every made-up URL or e-mail on example.com or .test, never verified or opened -->
+
 ## Don't claim
 EOF
 
-curl -fsSL -o "$DEST/assets/vendor/gsap.min.js" "https://cdn.jsdelivr.net/npm/gsap@$GSAP_VERSION/dist/gsap.min.js"
-curl -fsSL -o "$DEST/assets/fonts/inter-latin-wght-normal.woff2" "https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@$INTER_VERSION/files/inter-latin-wght-normal.woff2"
-curl -fsSL -o "$DEST/assets/fonts/LICENSE-Inter.txt" "https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@$INTER_VERSION/LICENSE"
+# vendored files are pinned by SHA-256: a version bump updates the hash next to it (shasum -a 256 <file>)
+fetch() { # <sha256> <dest> <url>
+  curl -fsSL -o "$2" "$3"
+  if [ "$(shasum -a 256 "$2" | cut -d' ' -f1)" != "$1" ]; then
+    rm -f "$2"; echo "checksum mismatch for $3; not using it" >&2; exit 1
+  fi
+}
+fetch c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280 "$DEST/assets/vendor/gsap.min.js" "https://cdn.jsdelivr.net/npm/gsap@$GSAP_VERSION/dist/gsap.min.js"
+fetch 3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62 "$DEST/assets/fonts/inter-latin-wght-normal.woff2" "https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@$INTER_VERSION/files/inter-latin-wght-normal.woff2"
+fetch 3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345 "$DEST/assets/fonts/LICENSE-Inter.txt" "https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@$INTER_VERSION/LICENSE"
 
 echo "project ready in $DEST (GSAP $GSAP_VERSION, Inter $INTER_VERSION)"

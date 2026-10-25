@@ -24,6 +24,11 @@ A plan per take, in `capture/plans/<name>.json`:
 - Steps: `wait`, `press`, `down`/`up`, `tap: [key, ms]`, `click: [fx, fy]`, `move: [fx, fy]` with `steps`,
   `mdown`/`mup` (drawing), `clickText` (regex on button/link text), `clickSel`, `waitFor`, `rec: start|stop`,
   `shot` (a PNG of the canvas, to find coordinates), `repeat`.
+- **Only the product's hosts load.** The recorder lets through the plan URL's host and its subdomains (`www.`
+  stripped) plus the hosts in `"allow": [...]`; everything else is aborted and printed as "blocked hosts". A game
+  that pulls assets from its own CDN needs that CDN in `allow`; ask the user before adding any host you have not
+  seen in the product's sources. Ad, analytics and tracking hosts stay blocked: the take is cleaner without them. A
+  plan URL that redirects off its host fails instead of following the redirect.
 - Record one plan at a time; parallel runs dropped frames.
 - **Clicks need a delay.** Game UIs (Phaser buttons among them) ignored a press and release in the same frame; the
   recorder clicks with a 120 ms hold. If a button still does nothing, take a `shot` and re-measure: a y off by 4% of

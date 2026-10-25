@@ -39,21 +39,21 @@ Spritesheet loading is fragile—a few pixels off causes silent corruption that 
 
 Read these BEFORE working on the relevant feature:
 
-| When working on...                                                                                                                                                                                                                   | Read first                                                                    |
+| When working on... | Read first |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| Starting a new game, or editing a scene you haven't touched recently                                                                                                                                                                 | [read-before-implement.md](references/read-before-implement.md)               |
-| Pre-merge / pre-release audit, or diagnosing a runtime error                                                                                                                                                                         | [pre-release-audit.md](references/pre-release-audit.md)                       |
-| Deciding whether to extract an FSM / BehaviorManager / TurnManager / WaveManager / CardManager / DialogueManager                                                                                                                     | [game-patterns.md](references/game-patterns.md)                               |
-| Loading ANY spritesheet                                                                                                                                                                                                              | [spritesheets-nineslice.md](references/spritesheets-nineslice.md)             |
-| Nine-slice UI panels                                                                                                                                                                                                                 | [spritesheets-nineslice.md](references/spritesheets-nineslice.md)             |
-| Config, scenes, objects, input, animations                                                                                                                                                                                           | [core-patterns.md](references/core-patterns.md)                               |
-| Tiled tilemaps, collision layers                                                                                                                                                                                                     | [tilemaps.md](references/tilemaps.md)                                         |
-| Physics tuning, groups, pooling                                                                                                                                                                                                      | [arcade-physics.md](references/arcade-physics.md)                             |
-| Scrolling platforms, custom body sizes                                                                                                                                                                                               | [arcade-physics.md](references/arcade-physics.md) (Static vs Dynamic section) |
-| Performance issues, object pooling                                                                                                                                                                                                   | [performance.md](references/performance.md)                                   |
-| Keyboard input, SPACE key, canvas focus                                                                                                                                                                                              | [keyboard-input.md](references/keyboard-input.md)                             |
-| Raycasting (Wolf3D-style FPS), doors, transparent gates, billboard sprites, enemy collision, secret walls, wall-mounted decals, torch lighting, fisheye fix, texture clipping, weapon sprites, enemy animation, level data integrity | [raycasting.md](references/raycasting.md)                                     |
-| Procedural dungeon generation, BSP splitting, corridor carving, door placement, wall-door-wall, level validation                                                                                                                     | [procedural-dungeon-gen.md](references/procedural-dungeon-gen.md)             |
+| Starting a new game, or editing a scene you haven't touched recently | [read-before-implement.md](references/read-before-implement.md) |
+| Pre-merge / pre-release audit, or diagnosing a runtime error | [pre-release-audit.md](references/pre-release-audit.md) |
+| Deciding whether to extract an FSM / BehaviorManager / TurnManager / WaveManager / CardManager / DialogueManager | [game-patterns.md](references/game-patterns.md) |
+| Loading ANY spritesheet | [spritesheets-nineslice.md](references/spritesheets-nineslice.md) |
+| Nine-slice UI panels | [spritesheets-nineslice.md](references/spritesheets-nineslice.md) |
+| Config, scenes, objects, input, animations | [core-patterns.md](references/core-patterns.md) |
+| Tiled tilemaps, collision layers | [tilemaps.md](references/tilemaps.md) |
+| Physics tuning, groups, pooling | [arcade-physics.md](references/arcade-physics.md) |
+| Scrolling platforms, custom body sizes | [arcade-physics.md](references/arcade-physics.md) (Static vs Dynamic section) |
+| Performance issues, object pooling | [performance.md](references/performance.md) |
+| Keyboard input, SPACE key, canvas focus | [keyboard-input.md](references/keyboard-input.md) |
+| Raycasting (Wolf3D-style FPS), doors, transparent gates, billboard sprites, enemy collision, secret walls, wall-mounted decals, torch lighting, fisheye fix, texture clipping, weapon sprites, enemy animation, level data integrity | [raycasting.md](references/raycasting.md) |
+| Procedural dungeon generation, BSP splitting, corridor carving, door placement, wall-door-wall, level validation | [procedural-dungeon-gen.md](references/procedural-dungeon-gen.md) |
 
 ---
 
@@ -68,11 +68,11 @@ Read these BEFORE working on the relevant feature:
 
 ### Physics System Choice
 
-| System     | Use When                                                               |
+| System | Use When |
 | ---------- | ---------------------------------------------------------------------- |
-| **Arcade** | Platformers, shooters, most 2D games. Fast AABB collisions             |
+| **Arcade** | Platformers, shooters, most 2D games. Fast AABB collisions |
 | **Matter** | Physics puzzles, ragdolls, realistic collisions. Slower, more accurate |
-| **None**   | Menu scenes, visual novels, card games                                 |
+| **None** | Menu scenes, visual novels, card games |
 
 ---
 
@@ -196,21 +196,21 @@ If a sprite faces south but `angle=0` means north: add `Math.PI` to sprite rotat
 
 ## Anti-Patterns
 
-| Anti-Pattern                                         | Problem                                                     | Solution                                                                                                  |
+| Anti-Pattern | Problem | Solution |
 | ---------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Global state on `window`                             | Scene transitions break state                               | Use scene data, registries                                                                                |
-| Loading in `create()`                                | Assets not ready when referenced                            | Load in `preload()`, use Boot scene                                                                       |
-| Frame counting                                       | Game speed varies with FPS                                  | Use `delta / 1000`                                                                                        |
-| Matter for simple collisions                         | Unnecessary complexity                                      | Arcade handles most 2D games                                                                              |
-| One giant scene                                      | Hard to extend                                              | Separate gameplay/UI/menus                                                                                |
-| Magic numbers                                        | Impossible to balance                                       | Config objects, constants                                                                                 |
-| No object pooling                                    | GC stutters                                                 | Groups with `setActive(false)`                                                                            |
-| `body.setSize(displayW, displayH)` on scaled sprites | Body is multiplied by scale → tiny                          | Use `body.setSize(frame.width, frame.height)`                                                             |
-| StaticBody + `setSize()` + `updateFromGameObject()`  | `updateFromGameObject()` overwrites custom size every frame | Use immovable dynamic body (`setImmovable(true)`) — see [arcade-physics.md](references/arcade-physics.md) |
-| `setAngle()` on physics sprites                      | Visual rotates but body stays axis-aligned (AABB)           | Use invisible zones for collision, sprites for visual only                                                |
-| Constant `setAlpha(0.5)` for invincibility           | Character looks broken/ghostly                              | Use blink tween (`alpha 1↔0.3, duration 80, yoyo`)                                                        |
-| Loading non-existent sprites in `preload()`          | Silent 404 errors on every game load                        | Only load files that exist; use `!textures.exists()` + programmatic fallback in `create()`                |
-| 2500 individual `add.image()` for tile grid          | 2500 game objects = slow                                    | Use `RenderTexture` — draw all tiles onto one texture                                                     |
+| Global state on `window` | Scene transitions break state | Use scene data, registries |
+| Loading in `create()` | Assets not ready when referenced | Load in `preload()`, use Boot scene |
+| Frame counting | Game speed varies with FPS | Use `delta / 1000` |
+| Matter for simple collisions | Unnecessary complexity | Arcade handles most 2D games |
+| One giant scene | Hard to extend | Separate gameplay/UI/menus |
+| Magic numbers | Impossible to balance | Config objects, constants |
+| No object pooling | GC stutters | Groups with `setActive(false)` |
+| `body.setSize(displayW, displayH)` on scaled sprites | Body is multiplied by scale → tiny | Use `body.setSize(frame.width, frame.height)` |
+| StaticBody + `setSize()` + `updateFromGameObject()` | `updateFromGameObject()` overwrites custom size every frame | Use immovable dynamic body (`setImmovable(true)`) — see [arcade-physics.md](references/arcade-physics.md) |
+| `setAngle()` on physics sprites | Visual rotates but body stays axis-aligned (AABB) | Use invisible zones for collision, sprites for visual only |
+| Constant `setAlpha(0.5)` for invincibility | Character looks broken/ghostly | Use blink tween (`alpha 1↔0.3, duration 80, yoyo`) |
+| Loading non-existent sprites in `preload()` | Silent 404 errors on every game load | Only load files that exist; use `!textures.exists()` + programmatic fallback in `create()` |
+| 2500 individual `add.image()` for tile grid | 2500 game objects = slow | Use `RenderTexture` — draw all tiles onto one texture |
 
 ---
 

@@ -1,0 +1,14 @@
+# SkillSpector suppressions for skills/context-guard, reviewed by hand (see README "Security scanning").
+version: 2
+rules:
+  - id: AS1
+    path: references/setup.md
+    message: "*~/.claude/*"
+    reason: the skill's purpose is installing a Claude Code status line and hook; setup.md shows the user the exact files it writes
+  - id: E4
+    path: scripts/scan-sessions.sh
+    message: "LOG SESSION*"
+    reason: column header of the local session table (printf), nothing is sent anywhere
+  - id: BH1
+    path: hooks/hooks.json
+    reason: the bundled upload-meter hook is the documented feature; it reads local transcript sizes only
