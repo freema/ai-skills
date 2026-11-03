@@ -10,15 +10,15 @@ Adapted from OpenGame's `debug-skill/seed-protocol`. Keys are renamed to match P
 
 Use these to **diagnose a reported error**. Each row: what you see → where to look → what to fix.
 
-| # | Stage | Signal | Root cause | Where to look |
+| #   | Stage   | Signal                                                                | Root cause                                                                                                                                                                          | Where to look                                                                                                     |
 | --- | ------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| R1 | build | `TS2307 Cannot find module '...'` | Wrong `../` depth, or path typo. `~/` alias works only where Vite/TSConfig is configured (app/). | Count `../` from importing file; prefer `~/` alias when crossing `app/` subtree |
-| R2 | build | `TS2339 Property 'X' does not exist on type 'Y'` | Property removed/renamed in type def, or accessing a member that was never declared. | Open the type/class definition; fix the access or add the declaration |
-| R3 | runtime | `TypeError: Cannot read properties of undefined` | Object used before construction in `create()`, or scene accessed after `scene.stop()`. | Reorder statements so init happens before access; guard with `this.scene.isActive()` if reading from paused scene |
-| R4 | runtime | `Texture key "X" not found` (or blank/pink sprite) | Texture key used in `this.add.image(key)` / `this.anims.create({ key })` was never preloaded. | Grep the key in `scenes/boot.ts`; check spelling, missing frame suffix, or asset path typo |
-| R5 | runtime | `Animation key "X" does not exist` | `.play("X")` called before `anims.create({ key: "X" })`, or anim created in a different scene with a key the current scene can't see (anims are global — check registration order). | Ensure `anims.create()` runs in Boot preload/create before any gameplay scene starts |
-| R6 | runtime | `Scene key "X" not found` on `scene.start("X")` / `scene.launch("X")` | Target scene not listed in the `scene: [...]` array returned by `getXxxConfig()`. | Add the import + include the class in the scene array of `config.ts` |
-| R7 | runtime | `RangeError: Maximum call stack size exceeded` | Infinite recursion or circular scene transition (A starts B, B starts A, neither stops first). | Trace the call chain; add a guard flag or `this.scene.stop()` before `start()` |
+| R1  | build   | `TS2307 Cannot find module '...'`                                     | Wrong `../` depth, or path typo. `~/` alias works only where Vite/TSConfig is configured (app/).                                                                                    | Count `../` from importing file; prefer `~/` alias when crossing `app/` subtree                                   |
+| R2  | build   | `TS2339 Property 'X' does not exist on type 'Y'`                      | Property removed/renamed in type def, or accessing a member that was never declared.                                                                                                | Open the type/class definition; fix the access or add the declaration                                             |
+| R3  | runtime | `TypeError: Cannot read properties of undefined`                      | Object used before construction in `create()`, or scene accessed after `scene.stop()`.                                                                                              | Reorder statements so init happens before access; guard with `this.scene.isActive()` if reading from paused scene |
+| R4  | runtime | `Texture key "X" not found` (or blank/pink sprite)                    | Texture key used in `this.add.image(key)` / `this.anims.create({ key })` was never preloaded.                                                                                       | Grep the key in `scenes/boot.ts`; check spelling, missing frame suffix, or asset path typo                        |
+| R5  | runtime | `Animation key "X" does not exist`                                    | `.play("X")` called before `anims.create({ key: "X" })`, or anim created in a different scene with a key the current scene can't see (anims are global — check registration order). | Ensure `anims.create()` runs in Boot preload/create before any gameplay scene starts                              |
+| R6  | runtime | `Scene key "X" not found` on `scene.start("X")` / `scene.launch("X")` | Target scene not listed in the `scene: [...]` array returned by `getXxxConfig()`.                                                                                                   | Add the import + include the class in the scene array of `config.ts`                                              |
+| R7  | runtime | `RangeError: Maximum call stack size exceeded`                        | Infinite recursion or circular scene transition (A starts B, B starts A, neither stops first).                                                                                      | Trace the call chain; add a guard flag or `this.scene.stop()` before `start()`                                    |
 
 ---
 
@@ -98,7 +98,7 @@ Any match is a bug — Phaser leaks keyboard listeners on SPA nav between games.
 
 ### P7. TOUCH_CONTROLS_CLEANUP (per memory `feedback-touch-controls`)
 
-Games using `createTouchControls()` must call `.destroy()` in `shutdown()` or via scene events. Grep:
+Games using `createTouchControls()` must call `.destroy()` on the scene `shutdown` event (`this.events.once("shutdown", …)`; Phaser never calls a scene method named `shutdown()`). Grep:
 
 ```bash
 grep -rn "createTouchControls" app/games/ | while read L; do
@@ -121,7 +121,7 @@ Payload shape (same as `game-over`, `GameOverData` in `app/games/types.ts`): `{ 
 
 ### P8. VIEWPORT_RESTART_GUARD (per memory `feedback-responsive-resize`)
 
-Scenes that listen on `VIEWPORT_CHANGED_EVENT` and call `scene.restart()` must compare old vs new size and skip the restart if unchanged — otherwise menu scenes loop-restart on mobile.
+Scenes that listen on `VIEWPORT_CHANGED_EVENT` and call `scene.restart()` must compare old vs new size and skip the restart if unchanged — otherwise menu scenes loop-restart on mobile. Same rule inside `app/games/shared/responsive-scale.ts`: `onResize()` stays inside the `newW !== currentW || newH !== currentH` branch, because layout shifts around the canvas (ads, cookie banner) fire Phaser resize events without a real size change.
 
 ```bash
 grep -rn "VIEWPORT_CHANGED_EVENT" app/games/ -A 4 | grep -B1 "scene.restart"
@@ -140,16 +140,43 @@ grep -E "slug:|width:|height:" app/games/registry.ts
 
 **Presets** (see `tasks/34-standardize-game-viewports.md`):
 
-| Preset | Dimensions | Ratio | Use when |
+| Preset     | Dimensions | Ratio | Use when                                                   |
 | ---------- | ---------- | ----- | ---------------------------------------------------------- |
-| `STD` | 960×720 | 1.33 | Default — cards, arcade, action, single-screen puzzles |
-| `WIDE` | 1280×720 | 1.78 | TD, dungeon crawlers, racing, big-camera games |
-| `PORTRAIT` | 540×960 | 0.56 | Phone-in-hand games; always pair with `mobileWidth/Height` |
-| `SQUARE` | 720×720 | 1.00 | Only when gameplay truly needs square (tight grid puzzles) |
+| `STD`      | 960×720    | 1.33  | Default — cards, arcade, action, single-screen puzzles     |
+| `WIDE`     | 1280×720   | 1.78  | TD, dungeon crawlers, racing, big-camera games             |
+| `PORTRAIT` | 540×960    | 0.56  | Phone-in-hand games; always pair with `mobileWidth/Height` |
+| `SQUARE`   | 720×720    | 1.00  | Only when gameplay truly needs square (tight grid puzzles) |
 
 When adding `mobileWidth/mobileHeight` per task 33, **also** check desktop ratio — opting a square game into the viewport helper without promoting desktop to STD/WIDE still letterboxes. Align the mobile variant to `PORTRAIT` (540×960) unless there's a reason not to.
 
 If you promote to STD/WIDE, also scan the game's scenes for hardcoded positions that assume square (`GW/2 + N` where N is a magic number that only worked at 640×640) — grep for uses of `GW` and `GH` to spot them.
+
+### P10. CANVAS_CLICK_GUARD (per memory `feedback-html-overlay-click-leak`)
+
+Phaser's MouseManager also listens for `mousedown`/`mouseup` on `window`, so a click on a React dialog over the canvas (e.g. the post-game "Save your score" prompt) lands on the Phaser button underneath. Buttons that can sit under an overlay (results / game-over panels) must ignore presses that did not start on the canvas:
+
+```typescript
+const onCanvas = (p: Phaser.Input.Pointer) =>
+  !p.event?.target || p.event.target === scene.game.canvas;
+btn.on("pointerdown", (p: Phaser.Input.Pointer) => { if (onCanvas(p)) onTap(); });
+```
+
+Reference helper: `onCanvas()` in `app/games/pixelopolis/scenes/ui.ts`. Synthetic events dispatched on the canvas never reproduce this; only a real (CDP) click on the overlay does.
+
+### P11. GAME_CANVAS_EFFECT_DEPS (only when touching `app/components/game-canvas.tsx`)
+
+The effect that creates the `Phaser.Game` must keep deps `[slug]` only. Anything else (e.g. `gameStrings`) changes on loader revalidation after game-over and tears down and recreates the game just as the game-over panel appears. Pass changing values through `game.registry` in a separate effect instead.
+
+---
+
+## Browser verification (synthetic input)
+
+Lint and unit tests do not prove a scene works; drive it in a real browser (per memory `feedback-phaser-browser-testing`):
+
+- **Pointer input:** Phaser 4 reads mouse/touch events, so a `PointerEvent` alone is a no-op. Dispatch `MouseEvent` (`mousedown`/`mousemove`/`mouseup`) on the canvas (adding the matching `PointerEvent` is harmless) with `view: window`, otherwise `pageY` ignores scroll and hits drift by `scrollY`. Call `game.scale.updateBounds()` first and map game coords through `scale.canvasBounds` + `scale.displayScale`.
+- **Keyboard:** `window.dispatchEvent(new KeyboardEvent("keydown", { key, code, keyCode }))` works because games use `keyboard.target: window`.
+- **Game instance:** not global. Take the canvas's parent element, find its `__reactFiber…` key, walk `fiber.return` and each hook's `memoizedState.next` until an object with `.scene && .events && .loop`; then `game.scene.getScene("Game")` exposes live state.
+- **Screenshot just the game:** `game.renderer.snapshot(img => …)` returns a data URL of the canvas only.
 
 ---
 
@@ -175,13 +202,13 @@ We don't have Base scenes yet, but when we do — this rule kicks in immediately
 
 ## When to run this checklist
 
-| Situation | Run |
+| Situation                                                   | Run                                                                                                                 |
 | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Adding a new game | Full list (all R + P rules) before first merge to main |
-| Touching a game's `config.ts` or `scenes/boot.ts` | P1, P2 |
-| Touching `registry.ts` or adding mobile/fullscreen variants | P9 (desktop ratio) + P8 (restart guard) |
-| Refactoring shared `app/games/shared/` | P2, P7, P8 on every consumer |
-| Before `git tag vX.Y.Z` | Full P1–P9 plus `task test` + `task lint` + `task format:check` (per memory `feedback-format-check-before-release`) |
-| After receiving a user bug report | Scan R1–R7 for the signature, then do the relevant P check |
+| Adding a new game                                           | Full list (all R + P rules) before first merge to main                                                              |
+| Touching a game's `config.ts` or `scenes/boot.ts`           | P1, P2                                                                                                              |
+| Touching `registry.ts` or adding mobile/fullscreen variants | P9 (desktop ratio) + P8 (restart guard)                                                                             |
+| Refactoring shared `app/games/shared/`                      | P2, P7, P8 on every consumer                                                                                        |
+| Before `git tag vX.Y.Z`                                     | Full P1–P11 plus `task test` + `task lint` + `task format:check` (per memory `feedback-format-check-before-release`) |
+| After receiving a user bug report                           | Scan R1–R7 for the signature, then do the relevant P check                                                          |
 
 Record any novel recurring bug pattern as a new rule here — this file is the project's living debug protocol.
