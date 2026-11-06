@@ -15,6 +15,7 @@ Read broad context first, specific source last. Specific source stays freshest i
 - This skill's [SKILL.md](../SKILL.md) — architecture decisions, physics choice
 - Relevant reference per the table in SKILL.md (spritesheets, tilemaps, raycasting, keyboard, performance)
 - [game-patterns.md](game-patterns.md) — before reaching for a one-off, check if a pattern already fits
+- For any Phaser API you are not sure of: `.claude/skills/phaser/<topic>/SKILL.md` (written for Phaser 4). Don't trust memory or host `node_modules/phaser`, which may still be 3.90
 
 ### Layer 2 — The game you're touching
 
@@ -48,7 +49,7 @@ If you can't list these concretely, you haven't read enough yet. Go back to Laye
 
 ## Hard rules while coding
 
-- **Never invent type names or method signatures.** If you don't remember, re-read. `Phaser.Physics.Arcade.Sprite` vs `Phaser.Physics.Arcade.Image` is a common silent trap.
+- **Never invent type names or method signatures.** If you don't remember, re-read. v3 habits can fail quietly in v4 (e.g. `setTintFill` only logs a console error, applies no tint and returns `undefined`). `Phaser.Physics.Arcade.Sprite` vs `Phaser.Physics.Arcade.Image` is a common silent trap.
 - **Never write `// Assuming X works like Y`.** Stop and verify.
 - **Never copy a pattern from another game without reading the source.** Games here are heterogeneous (raycaster, card game, match, platformer) — what works in Snake may be wrong in Dungeon Cast.
 - **Follow the audit.** Before declaring the work done, run the relevant proactive checks in [pre-release-audit.md](pre-release-audit.md) (P1 asset keys, P2 scene registration at minimum).
