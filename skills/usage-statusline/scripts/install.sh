@@ -6,6 +6,9 @@
 # that key itself, and the plugin cache path changes on every update, so the
 # script is copied to a stable path. Re-run after a plugin update.
 #
+# Also sets statusLine.refreshInterval (unless already set) so the cache and
+# plan countdowns keep ticking while the session is idle.
+#
 #   install.sh           install; refuses to replace a different status line
 #   install.sh --force   replace an existing status line (settings are backed up)
 
@@ -16,6 +19,7 @@ dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 dest="$dir/usage-statusline.sh"
 settings="$dir/settings.json"
 cmd="~/.claude/usage-statusline.sh"
+REFRESH_SECONDS=30
 [ -n "${CLAUDE_CONFIG_DIR:-}" ] && cmd="$dest"
 
 command -v jq >/dev/null 2>&1 || { echo "jq is required (brew install jq / apt install jq)" >&2; exit 1; }
@@ -33,12 +37,17 @@ fi
 
 install -m 755 "$src" "$dest"
 
-if [ "$current" != "$cmd" ]; then
+tmp=$(mktemp)
+jq --arg cmd "$cmd" --argjson every "$REFRESH_SECONDS" '
+  .statusLine = {padding: 0, refreshInterval: $every}
+    + (if .statusLine.command == $cmd then .statusLine else {} end)
+    + {type: "command", command: $cmd}' "$settings" > "$tmp"
+if [ "$(jq -S . "$tmp")" != "$(jq -S . "$settings")" ]; then
   cp "$settings" "$settings.bak.$(date +%Y%m%d%H%M%S)"
-  tmp=$(mktemp)
-  jq --arg cmd "$cmd" '.statusLine = {type: "command", command: $cmd, padding: 0}' "$settings" > "$tmp"
   mv "$tmp" "$settings"
+else
+  rm -f "$tmp"
 fi
 
 echo "Installed $dest"
-echo "statusLine -> $cmd (shows on the next refresh; restart Claude Code if it does not)"
+echo "statusLine -> $cmd, refreshed every $(jq -r '.statusLine.refreshInterval' "$settings") s (shows on the next refresh; restart Claude Code if it does not)"
