@@ -1,6 +1,6 @@
 ---
 name: usage-statusline
-description: "Install a Claude Code status line that shows the model, context fill as a coloured bar, a countdown until the prompt cache goes cold, on Pro/Max plans the usage window closest to its limit with time until it resets, and the project folder (clickable) and git worktree. One install script copies it to a stable path and sets statusLine in ~/.claude/settings.json, backing the file up first. Use when the user wants to see context, cache or plan usage at a glance, asks when their limit resets or when the cache expires, or wants the same status line on another machine. Triggers: 'status line', 'statusline', 'show context usage', 'when does my limit reset', 'when does the cache expire', 'how much of my plan is left', 'install my status line', 'kolik mám kontextu', 'kdy se resetuje limit', 'kdy vyprší cache', 'dej mi statusline'."
+description: "Install a Claude Code status line that shows the model, context fill as a coloured bar, a countdown until the prompt cache goes cold, on Pro/Max plans the usage window closest to its limit with time until it resets, the project folder (clickable), git worktree and the logged-in account. One install script copies it to a stable path and sets statusLine in ~/.claude/settings.json, backing the file up first. Use when the user wants to see context, cache or plan usage at a glance, asks when their limit resets or when the cache expires, or wants the same status line on another machine. Triggers: 'status line', 'statusline', 'show context usage', 'when does my limit reset', 'when does the cache expire', 'how much of my plan is left', 'install my status line', 'kolik mám kontextu', 'kdy se resetuje limit', 'kdy vyprší cache', 'dej mi statusline'."
 ---
 
 # Usage Status Line
@@ -8,7 +8,7 @@ description: "Install a Claude Code status line that shows the model, context fi
 One line under the prompt:
 
 ```
-Opus 5.5 │ ████░░░░░░ 42% ⧗ 12 min │ 5h 73%↑ 1:48 │ www/reglog3 │ 🌿 rule-fixes
+Opus 5.5 │ ████░░░░░░ 42% ⧗ 12 min │ 5h 73%↑ 1:48 │ www/reglog3 │ 🌿 rule-fixes │ you@example.com
 ```
 
 | Part | Meaning |
@@ -19,6 +19,7 @@ Opus 5.5 │ ████░░░░░░ 42% ⧗ 12 min │ 5h 73%↑ 1:48 �
 | `5h 73%↑ 1:48` | Plan usage: the window (`5h` or `7d`) closest to its limit, and time until it resets (`h:mm`, or `4d3h` for the 7-day one). `↑` means usage is running ahead of the clock: more of the limit is used than of the window has passed |
 | `www/reglog3` | Project folder as parent/name (just the name when it sits in the home folder), click to open it |
 | `🌿 rule-fixes` | Git worktree, only when working in a linked one |
+| `you@example.com` | The claude.ai account Claude Code is logged in with (`oauthAccount` in `~/.claude.json`); hidden with an API key |
 
 The cache and plan parts come from the `prompt_cache` and `rate_limits` fields
 Claude Code passes to status lines. They appear after the session's first

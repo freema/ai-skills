@@ -2,7 +2,7 @@
 # usage-statusline — status line
 #
 # Reads the status line JSON on stdin and prints one line:
-#   Opus 5.5 │ ████░░░░░░ 42% ⧗ 12 min │ 5h 73%↑ 1:48 │ www/reglog3 │ 🌿 rule-fixes
+#   Opus 5.5 │ ████░░░░░░ 42% ⧗ 12 min │ 5h 73%↑ 1:48 │ www/reglog3 │ 🌿 rule-fixes │ you@example.com
 #
 #   - model
 #   - context fill as a bar: green < 50 %, yellow < 80 %, red above
@@ -10,6 +10,7 @@
 #   - Pro/Max plans: the window (5 h or 7 d) closest to its limit, ↑ when usage
 #     runs ahead of the clock, time until it resets
 #   - project folder (clickable) and git worktree (only in a linked one)
+#   - the claude.ai account Claude Code is logged in with
 #
 # Cache and plan figures appear after the session's first response. The
 # countdowns tick while the session is idle only with statusLine.refreshInterval.
@@ -98,5 +99,10 @@ if [ -n "$project" ]; then
 fi
 
 [ -n "$worktree" ] && out+="${SEP}🌿 ${worktree}"
+
+# Logged-in account (claude.ai login only)
+config="${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json"
+account=$(jq -r '.oauthAccount.emailAddress // empty' "$config" 2>/dev/null)
+[ -n "$account" ] && out+="${SEP}${DIM}${account}${RESET}"
 
 printf '%s\n' "$out"

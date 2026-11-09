@@ -165,7 +165,7 @@
     {
       "name": "usage-statusline",
       "source": "./skills/usage-statusline",
-      "description": "Claude Code status line — model, context fill as a coloured bar, a countdown until the prompt cache goes cold, on Pro/Max plans the usage window closest to its limit with time until it resets, and the project folder and git worktree. One install script sets it up on any machine.",
+      "description": "Claude Code status line — model, context fill as a coloured bar, a countdown until the prompt cache goes cold, on Pro/Max plans the usage window closest to its limit with time until it resets, the project folder, git worktree and the logged-in account. One install script sets it up on any machine.",
       "version": "1.1.0",
       "author": {
         "name": "Tomas Grasl"
