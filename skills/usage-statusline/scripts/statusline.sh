@@ -10,7 +10,8 @@
 #   - Pro/Max plans: the window (5 h or 7 d) closest to its limit, ↑ when usage
 #     runs ahead of the clock, time until it resets
 #   - project folder (clickable) and git worktree (only in a linked one)
-#   - the claude.ai account Claude Code is logged in with
+#   - the claude.ai account Claude Code is logged in with, in a colour of its
+#     own (picked from a hash of the address) so a switch shows at a glance
 #
 # Cache and plan figures appear after the session's first response. The
 # countdowns tick while the session is idle only with statusLine.refreshInterval.
@@ -103,6 +104,10 @@ fi
 # Logged-in account (claude.ai login only)
 config="${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json"
 account=$(jq -r '.oauthAccount.emailAddress // empty' "$config" 2>/dev/null)
-[ -n "$account" ] && out+="${SEP}${DIM}${account}${RESET}"
+if [ -n "$account" ]; then
+  palette=(33 44 135 205 208 130) # blue, turquoise, purple, pink, orange, brown: none of the status colours
+  hash=$(printf %s "$account" | cksum); hash=${hash%% *}
+  out+="${SEP}"$'\033[38;5;'"${palette[hash % ${#palette[@]}]}m${account}${RESET}"
+fi
 
 printf '%s\n' "$out"

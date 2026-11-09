@@ -19,7 +19,7 @@ Opus 5.5 │ ████░░░░░░ 42% ⧗ 12 min │ 5h 73%↑ 1:48 �
 | `5h 73%↑ 1:48` | Plan usage: the window (`5h` or `7d`) closest to its limit, and time until it resets (`h:mm`, or `4d3h` for the 7-day one). `↑` means usage is running ahead of the clock: more of the limit is used than of the window has passed |
 | `www/reglog3` | Project folder as parent/name (just the name when it sits in the home folder), click to open it |
 | `🌿 rule-fixes` | Git worktree, only when working in a linked one |
-| `you@example.com` | The claude.ai account Claude Code is logged in with (`oauthAccount` in `~/.claude.json`); hidden with an API key |
+| `you@example.com` | The claude.ai account Claude Code is logged in with (`oauthAccount` in `~/.claude.json`), each account in its own colour picked from a hash of the address, so a switch shows at a glance. Six colours, so two accounts can share one. Hidden with an API key |
 
 The cache and plan parts come from the `prompt_cache` and `rate_limits` fields
 Claude Code passes to status lines. They appear after the session's first
