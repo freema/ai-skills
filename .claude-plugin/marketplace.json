@@ -165,14 +165,14 @@
     {
       "name": "usage-statusline",
       "source": "./skills/usage-statusline",
-      "description": "Claude Code status line — model, context fill as a coloured bar with tokens used, and on Pro/Max plans the 5-hour and 7-day usage with time until each limit resets. One install script sets it up on any machine.",
-      "version": "1.0.0",
+      "description": "Claude Code status line — model, context fill as a coloured bar, a countdown until the prompt cache goes cold, on Pro/Max plans the usage window closest to its limit with time until it resets, and the project folder and git worktree. One install script sets it up on any machine.",
+      "version": "1.1.0",
       "author": {
         "name": "Tomas Grasl"
       },
       "repository": "https://github.com/freema/ai-skills",
       "license": "MIT",
-      "keywords": ["statusline", "context", "usage", "rate-limits", "claude-code"],
+      "keywords": ["statusline", "context", "usage", "rate-limits", "prompt-cache", "worktree", "claude-code"],
       "category": "system"
     }
   ]
