@@ -32,8 +32,8 @@ Phaser doesn't have a built-in raycasting renderer. The approach:
 4. Display as a single `Phaser.GameObjects.Image` upscaled to game size via `setDisplaySize()`
 
 ```typescript
-// config.ts — MUST use Phaser.CANVAS (not AUTO/WEBGL)
-type: Phaser.CANVAS;
+// config.ts — Phaser.AUTO works (see renderer note below)
+type: Phaser.AUTO;
 
 // create()
 const canvasTex = this.textures.createCanvas("view", RENDER_W, RENDER_H);
@@ -47,7 +47,7 @@ this.renderHUD(); // draw to ctx
 (this.textures.get("view") as Phaser.Textures.CanvasTexture).refresh();
 ```
 
-**Why CANVAS mode**: `CanvasTexture.getContext()` returns a real `CanvasRenderingContext2D`. In WebGL mode, Phaser uses a different rendering path and `getContext()` may not work as expected.
+**Renderer**: `CanvasTexture.getContext()` returns a real `CanvasRenderingContext2D` under either renderer; under WebGL, `refresh()` uploads the canvas to the GPU each frame. Strafe Run and Redline Pursuit render software 3D this way on `Phaser.AUTO` (`putImageData` + `refresh()`). Dungeon Cast and Glyph Depths still use `Phaser.CANVAS`, which Phaser 4 deprecates (see `.claude/skills/phaser/v3-to-v4-migration/SKILL.md` §2). Use `AUTO` for new games; don't switch the old ones without a browser check.
 
 **Why low resolution**: Raycasting renders per-column (320 columns = 320 rays). Upscaling via Phaser's `setDisplaySize()` with `pixelArt: true` gives the chunky retro look for free.
 
