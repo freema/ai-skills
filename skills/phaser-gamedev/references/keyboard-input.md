@@ -1,8 +1,8 @@
-# Keyboard Input in Phaser 3 (Embedded in React/SPA)
+# Keyboard Input in Phaser 4 (Embedded in React/SPA)
 
 ## CRITICAL: Never preventDefault Before Phaser
 
-Phaser 3's `KeyboardManager.onKeyDown` **skips events where `event.defaultPrevented` is true**:
+Phaser's `KeyboardManager.onKeyDown` (unchanged in v4.0) **skips events where `event.defaultPrevented` is true**:
 
 ```javascript
 // Phaser source — KeyboardManager.js
@@ -62,7 +62,7 @@ this.input.keyboard!.addCapture([
 ]);
 ```
 
-This must be done in EVERY scene (Menu AND Game), because captures are scene-specific.
+Captures live on the game-wide `KeyboardManager`, so they persist across scenes and are not removed on scene shutdown. Still list every key a scene uses in that scene's `create()`, so it does not depend on which scene ran first.
 
 ---
 
@@ -98,6 +98,25 @@ this.flapWasDown = !!flapDown;
 
 ---
 
+## Queued keydown re-emit (stalled rAF)
+
+`KeyboardPlugin.update()` runs on every DOM key event, but the manager queue is only cleared on the next game step. When rAF stalls (background tab, headless Chrome), each new keydown replays the whole queue, and Phaser's dedup only compares the last event, so an old ArrowRight fires again on every later key. Discrete `keydown-X` handlers must gate on the event object (the replay passes the same DOM event); `isDown` polling in `update()` is unaffected:
+
+```typescript
+const handled = new WeakSet<KeyboardEvent>();
+kb.on("keydown-RIGHT", (e?: KeyboardEvent) => {
+  if (e) {
+    if (handled.has(e)) return;
+    handled.add(e);
+  }
+  nudge(1, 0);
+});
+```
+
+Live examples: `harvest-hollow/scenes/game.ts` (`bindKeyboard`), `detention-deep/scenes/*.ts` (`seen`).
+
+---
+
 ## Checklist
 
 1. Game config has `input.keyboard.target: window`
@@ -106,6 +125,7 @@ this.flapWasDown = !!flapDown;
 4. No duplicate `addKey(SPACE)` when `createCursorKeys()` already creates it
 5. All links to `/games/$slug` use `reloadDocument`
 6. Use manual rising-edge detection instead of `JustDown`
+7. Discrete `keydown-X` handlers deduped with a `WeakSet<KeyboardEvent>`
 
 ---
 

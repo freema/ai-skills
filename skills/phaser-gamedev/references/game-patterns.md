@@ -131,7 +131,7 @@ Do not try to unify A and B under one "DialogueManager" — the contracts differ
 
 - **Boot** — preload assets, create animations, start Menu
 - **Menu** — title + play/settings buttons, emits `game-start`
-- **Game** — gameplay loop, emits `progress-save` + `game-over`
+- **Game** — gameplay loop, emits `score-update` (checkpoints) + `game-over` (see pre-release-audit P8a)
 - **GameOver** (overlay) — final score, retry / back buttons
 - **Pause** (overlay) — resume / restart / quit
 
