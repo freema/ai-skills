@@ -174,6 +174,32 @@
       "license": "MIT",
       "keywords": ["statusline", "context", "usage", "rate-limits", "prompt-cache", "worktree", "claude-code"],
       "category": "system"
+    },
+    {
+      "name": "android-device-testing",
+      "source": "./skills/android-device-testing",
+      "description": "Test a web app or browser game on a real Android phone over adb instead of trusting emulation — adb reverse to the local build, Chrome DevTools protocol for rects, console, LCP/CLS and FPS, real taps in physical pixels with a calibrated offset, a lock/doze check first, etiquette on a personal phone, and honest measured / derived / not-checked reports.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["android", "adb", "mobile-testing", "real-device", "chrome-devtools-protocol", "touch", "fps", "core-web-vitals"],
+      "category": "development"
+    },
+    {
+      "name": "mobile-first-redesign",
+      "source": "./skills/mobile-first-redesign",
+      "description": "Run a mobile-first redesign of a live site with AI agents — analytics and phone baseline before code, one spec file with numbered decisions and an unverified chapter, small PRs behind a cookie switch then one release, an all-pages sweep at phone and desktop widths, rect diffs for phone unchanged, SEO byte-diffs, a deliberate desktop pass, and visual choices on one review page.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Tomas Grasl"
+      },
+      "repository": "https://github.com/freema/ai-skills",
+      "license": "MIT",
+      "keywords": ["redesign", "mobile-first", "design-tokens", "seo", "visual-regression", "agents", "orchestration", "core-web-vitals"],
+      "category": "development"
     }
   ]
 }
