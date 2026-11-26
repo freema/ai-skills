@@ -117,7 +117,7 @@ These are steps 0–11 of the playbook. Each phase gets its own commit.
 2. Owner decisions, then rewrite the brief. Cut breadth here, never visuals.
 3. Engine with no Phaser, plus an **expert bot and a newcomer bot**, and thresholds in the brief. Wire them as a
    balance adapter (`balance.ts` + `balance.run.ts`, the thresholds as targets) and check `task balance -- <slug>`
-   and `task smoke -- <slug>` ([docs/headless-balance.md](../../../docs/headless-balance.md)).
+   and `task smoke -- <slug>` (`docs/headless-balance.md`).
 4. Visual checkpoint 1: a grey box at full density (all props, walkers and pops).
 5. Art plan and PixelLab, with the budget reserved up front.
 6. Life and chrome pass: construction, tags, bubbles, ambient, illustrated events.

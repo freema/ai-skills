@@ -60,6 +60,10 @@ grep -nE "slug:\s*['\"]" app/games/registry.ts  # slug entries
 
 A mismatch means the game renders a 404 or falls through to the generic layout.
 
+### P3a. CATEGORY_REACHABILITY
+
+The game's registry `genre` must be one of the `genre` values in `app/games/categories.ts` (`GAME_CATEGORIES`), otherwise it shows under no category chip and on no category page. A new genre needs a new category there plus `category.items.<slug>` texts in `locales/{en,es,de}/gamePage.json` and a value in `GENRE_VALUES` (`app/lib/catalog-filter.ts`). Check with `task test:catalog` (the same guard runs in CI).
+
 ### P4. LEVEL_MANIFEST (multi-level games only)
 
 For games with `levels/manifest.json` (frost-hold, titan-siege, relic-rush, dungeon-cast):
