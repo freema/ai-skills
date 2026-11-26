@@ -1,3 +1,8 @@
+---
+name: image-generation
+description: "Generate game assets through the Google Gemini API and process them into final sprite files (background removal, crop, resize, optimize). Use for backgrounds and thumbnails that are not PixelLab sprites. Triggers: 'generate image', 'Gemini image', 'thumbnail', 'background art', 'asset pipeline'."
+---
+
 # Image Generation & Asset Pipeline
 
 Generuj game assety přes Google Gemini API a zpracuj je do finálních sprite souborů.
