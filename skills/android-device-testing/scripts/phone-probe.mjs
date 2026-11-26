@@ -50,10 +50,17 @@ const metrics = await page.evaluate((itemSel) => {
     .filter((e) => vis(e) && !e.closest("p"))
     .map((e) => ({ e, r: e.getBoundingClientRect() }))
     .filter(({ r }) => r.width < 44 || r.height < 44)
-    .map(({ e, r }) => `${e.tagName} ${Math.round(r.width)}x${Math.round(r.height)} ${(e.getAttribute("aria-label") || e.textContent || "").trim().slice(0, 24)}`);
+    .map(({ e, r }) => {
+      const label = (e.getAttribute("aria-label") || e.textContent || "").trim().slice(0, 24);
+      return e.tagName + " " + Math.round(r.width) + "x" + Math.round(r.height) + " " + label;
+    });
   const rects = [...document.querySelectorAll("body *")]
     .filter((e) => { const r = e.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0 && r.width > 0 && r.height > 0 && !e.closest("svg"); })
-    .map((e) => { const r = e.getBoundingClientRect(); return `${e.tagName} ${[r.x, r.y, r.width, r.height].map((v) => Math.round(v * 10) / 10).join(",")}`; });
+    .map((e) => {
+      const r = e.getBoundingClientRect();
+      const box = [r.x, r.y, r.width, r.height].map((v) => Math.round(v * 10) / 10);
+      return e.tagName + " " + box.join(",");
+    });
   return {
     viewport: `${innerWidth}x${innerHeight}`,
     dpr: devicePixelRatio,

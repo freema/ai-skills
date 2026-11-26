@@ -57,7 +57,8 @@ for (const p of paths) {
       .map((e) => {
         const r = e.getBoundingClientRect();
         const id = e.id ? "#" + e.id : "";
-        return `${e.tagName}${id} ${[r.x, r.y, r.width, r.height].map((v) => Math.round(v * 10) / 10).join(",")}`;
+        const box = [r.x, r.y, r.width, r.height].map((v) => Math.round(v * 10) / 10);
+        return e.tagName + id + " " + box.join(",");
       });
     return { viewport: `${innerWidth}x${innerHeight}@${devicePixelRatio}`, docH: document.documentElement.scrollHeight, rects };
   });

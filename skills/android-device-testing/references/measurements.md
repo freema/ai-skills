@@ -49,7 +49,10 @@ long listing.
     .filter((e) => !e.closest('p'))
     .map((e) => ({ e, r: e.getBoundingClientRect() }))
     .filter(({ r }) => r.width > 0 && (r.width < 44 || r.height < 44))
-    .map(({ e, r }) => `${e.tagName} ${Math.round(r.width)}x${Math.round(r.height)} ${(e.textContent || '').trim().slice(0, 20)}`);
+    .map(({ e, r }) => {
+      const label = (e.textContent || '').trim().slice(0, 20);
+      return e.tagName + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' ' + label;
+    });
   return JSON.stringify({ minFont: min, smallCount: small.length, small: small.slice(0, 30) });
 })()
 ```

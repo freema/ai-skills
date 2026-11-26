@@ -16,7 +16,7 @@ const [, , cmd, arg] = process.argv;
 const base = process.env.CDP_URL || "http://localhost:9222";
 const match = process.env.CDP_MATCH || "localhost";
 
-const list = await (await fetch(`${base}/json/list`)).json();
+const list = await (await fetch(base + "/json/list")).json();
 if (cmd === "targets") {
   for (const t of list) console.log(t.id, "|", t.type, "|", t.url, "|", t.title);
   process.exit(0);
@@ -24,17 +24,18 @@ if (cmd === "targets") {
 
 const page = list.find((t) => t.type === "page" && t.url.includes(match));
 if (!page) {
-  console.error(`no page matching "${match}"; targets:`, list.map((t) => `${t.type} ${t.url}`).join(", "));
+  const targets = list.map((t) => t.type + " " + t.url);
+  console.error("no page matching " + match + "; targets:", targets.join(", "));
   process.exit(1);
 }
 if (cmd === "close") {
-  await fetch(`${base}/json/close/${page.id}`);
+  await fetch(base + "/json/close/" + page.id);
   console.log("closed", page.url);
   process.exit(0);
 }
 
 const timer = setTimeout(() => {
-  console.error("TIMEOUT");
+  console.error("timed out after 60 s");
   process.exit(3);
 }, 60_000);
 
@@ -80,19 +81,23 @@ try {
       const r = el.getBoundingClientRect();
       return [r.x + r.width / 2, r.y + r.height / 2].map((n) => n.toFixed(1)).join(" ") + " " + devicePixelRatio;
     })()`);
-    if (v === "missing") throw new Error(`no element for ${arg}`);
+    if (v === "missing") throw new Error("no element for " + arg);
     console.log(v);
   } else if (cmd === "console") {
     await send("Runtime.enable");
     await send("Log.enable");
     await new Promise((r) => setTimeout(r, Number(arg || 5) * 1000));
     for (const e of events) {
-      if (e.method === "Runtime.consoleAPICalled")
-        console.log(`[${e.params.type}]`, e.params.args.map((a) => a.value ?? a.description ?? "").join(" ").slice(0, 300));
-      else if (e.method === "Runtime.exceptionThrown")
-        console.log("[exception]", (e.params.exceptionDetails.exception?.description ?? e.params.exceptionDetails.text).slice(0, 400));
-      else if (e.method === "Log.entryAdded")
-        console.log(`[log:${e.params.entry.level}]`, e.params.entry.text.slice(0, 300), e.params.entry.url ?? "");
+      if (e.method === "Runtime.consoleAPICalled") {
+        const text = e.params.args.map((a) => a.value ?? a.description ?? "").join(" ");
+        console.log("[" + e.params.type + "]", text.slice(0, 300));
+      } else if (e.method === "Runtime.exceptionThrown") {
+        const details = e.params.exceptionDetails;
+        console.log("[exception]", (details.exception?.description ?? details.text).slice(0, 400));
+      } else if (e.method === "Log.entryAdded") {
+        const entry = e.params.entry;
+        console.log("[log:" + entry.level + "]", entry.text.slice(0, 300), entry.url ?? "");
+      }
     }
   } else {
     console.error("unknown command; see the header of this file");
