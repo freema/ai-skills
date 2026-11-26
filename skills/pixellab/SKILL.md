@@ -1,3 +1,8 @@
+---
+name: pixellab
+description: "Generate pixel-art game assets with PixelLab, MCP tools first: characters, objects, animations, tilesets, UI, VFX; prompt, download, verify and versioning rules. Use for any PixelLab asset work in app/games/**. Triggers: 'PixelLab', 'sprite', 'animate character', 'tileset', 'create_character', 'pixel art asset'."
+---
+
 # PixelLab Skills (MCP-first)
 
 Pixel-art asset generation for `app/games/**`. **The PixelLab MCP server is the default

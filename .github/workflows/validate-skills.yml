@@ -119,7 +119,7 @@ jobs:
       - name: Generate SARIF
         if: always()
         continue-on-error: true
-        run: agnix --target claude-code --format sarif -o agnix-results.sarif skills/
+        run: agnix --target claude-code --format sarif skills/ > agnix-results.sarif
 
       - name: Upload SARIF
         if: always() && hashFiles('agnix-results.sarif') != ''
