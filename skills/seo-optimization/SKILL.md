@@ -187,7 +187,7 @@ To keep your description: make it **a clean summary of the page's main answer** 
 
 - Twitter **falls back to `og:*`** for title/description/image when `twitter:*` is missing — but **`twitter:card` itself is NOT inferred from OG**. Without it, no card renders ([2026 Twitter Card guide](https://ogmagic.dev/blog/twitter-card-image-guide)).
 - Twitter's preferred image ratio is **2 : 1 (1200 × 600 or 1200 × 675)**. Our 1.91 : 1 OG image still works — gets minor side-crop. If we author a Twitter-specific image, prefer 1200 × 675.
-- **Twitter's official Card Validator was retired**. To verify, post the URL into a Tweet draft and check the preview. Use [share-preview.com](https://share-preview.com) or similar third-party previewers for non-destructive testing.
+- **Twitter's official Card Validator was retired**. To verify, post the URL into a Tweet draft and check the preview. Use a third-party previewer for non-destructive testing.
 - `twitter:image:alt` is part of Twitter's spec — include it for accessibility (screen readers on x.com use it). Max 420 chars.
 
 ### `twitter:site` vs `twitter:creator`
@@ -377,7 +377,7 @@ Free-text but **stick to common terms**: `Arcade`, `Puzzle`, `Strategy`, `Card`,
 
 ### 5.6 `FAQPage` — **do not add**
 
-**Status (2026):** FAQ rich results were narrowed to government/health sites in Aug 2023 and **fully removed** in May 2026 ([ALM Corp summary](https://almcorp.com/blog/google-faq-rich-results-no-longer-supported/), [Google's 2023 announcement](https://developers.google.com/search/blog/2023/08/howto-faq-changes)).
+**Status (2026):** FAQ rich results were narrowed to government/health sites in Aug 2023 and **fully removed** in May 2026 ([Google's 2023 announcement](https://developers.google.com/search/blog/2023/08/howto-faq-changes)).
 
 - **Do not** add `FAQPage` JSON-LD to new pages — it produces zero rich results and adds page weight.
 - `HowTo` schema was also deprecated in the same wave — don't add it either.
@@ -531,7 +531,7 @@ This is a classic **entity disambiguation** problem. The fix is structural, not 
 
 ### Above-the-fold / LCP image
 
-- **Always `<img>`**, never `background-image` CSS — Phaser canvas excluded. This is the most common LCP killer we hit ([see lighthouse skill](../lighthouse/SKILL.md)).
+- **Always `<img>`**, never `background-image` CSS — Phaser canvas excluded. This is the most common LCP killer we hit (see the `lighthouse` skill).
 - Set explicit `width` and `height` attributes (prevents CLS).
 - Set `fetchPriority="high"` on the single LCP image; **don't** set it on multiple images per page (priority signal gets diluted).
 - Set `loading="eager"` (the default for in-viewport images; setting `loading="lazy"` on the LCP image is a documented anti-pattern).
@@ -600,7 +600,7 @@ Content relevance is still the #1 ranking factor. CWV is a tiebreaker. But:
 
 - ❌ AI-generated boilerplate with no value-add ("Snake is a fun game. Play Snake today. Snake is great."). Google's helpful-content + spam updates target this directly.
 - ❌ Same description across all locales (machine translation that hasn't been reviewed). Per-locale `seoDescription` should read natively.
-- ❌ Pages with `noindex` in the original HTML when you DO want them indexed. Google's Dec 2024 update made it explicit: noindex in JS may cause Googlebot to skip rendering ([source](https://almcorp.com/blog/google-noindex-tag-warning-original-page-code/)).
+- ❌ Pages with `noindex` in the original HTML when you DO want them indexed. Google's Dec 2024 update made it explicit: noindex in JS may cause Googlebot to skip rendering.
 - ❌ Duplicate content across `/`, `/en/`, `/games`, `/en/games` — make sure the redirect-or-canonical strategy is consistent.
 
 ### 11.5 Robots / indexing
@@ -829,7 +829,6 @@ Run through this before declaring a page "SEO done":
 
 - [Rich Results Test](https://search.google.com/test/rich-results) — primary structured data validator
 - [Schema Markup Validator](https://validator.schema.org/) — full schema.org validator (Google's RRT only covers Google-supported subset)
-- [share-preview.com](https://share-preview.com) — OG / Twitter Card preview (since X retired theirs)
 - Facebook Sharing Debugger — `https://developers.facebook.com/tools/debug/`
 - [Google Search Console](https://search.google.com/search-console) — coverage, CWV, hreflang errors
 - `task lighthouse` — local CWV audit (this repo)
