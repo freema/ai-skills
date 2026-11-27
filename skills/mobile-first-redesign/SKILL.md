@@ -52,7 +52,8 @@ Template: `references/spec-template.md`. The parts that earned their place:
   contrast, radii, spacing (tap 44, gutter, gap), and named heading roles
   (page title, entity title, section, subsection, card title) with phone /
   desktop sizes. One h1 per page, no skipped levels, never raw sizes on
-  headings. Minimum text 12 px; a decorative display font only from 18 px.
+  headings. Minimum text 12 px (16 px for an older audience, §6); a
+  decorative display font only from 18 px.
 - **Numbered decisions with dates** and who decided. Superseded decisions stay,
   struck through, with "replaced by N". Agents decide what can be derived from
   code and the spec and write it down; they ask the owner only what only the
@@ -127,11 +128,73 @@ What caught it was a **sweep of every page**:
 - **LCP/CLS** medians of 5 loads on a **production build**, before and after,
   for home, a listing and an entity page; CLS on first visit too (tours and
   consent bars shift layouts).
-- Real phone for the pages that matter, through `adb reverse`.
+- **Real phone for anything with a keyboard, a fixed bar or touch.** Emulation
+  and unit tests passed every keyboard, toolbar and font-size bug the first
+  device pass found. Mechanics are in `android-device-testing`: dev server via
+  `adb reverse`, Chrome via `adb forward tcp:9222 localabstract:chrome_devtools_remote`,
+  rects over CDP against `visualViewport` (not `innerHeight`, which ignores the
+  keyboard), and every tap a real `adb shell input tap` — a scripted click
+  skips the pointer and focus events that close keyboards. Keep the screen awake
+  for the session (`svc power stayon usb`, after reading the old
+  `settings get global stay_on_while_plugged_in` and putting it back at the
+  end); that is the only device setting you touch.
+- **Every state a player is in**: the resting scroll position they actually
+  reach (not the top of the page), URL bar shown and hidden, consent bar still
+  up, 360 px wide, root font at 130 % (`documentElement.style.fontSize`), soft
+  keyboard open. A bug usually lives in exactly one of them.
+- **Criteria are numbers**: "nothing moves" = rects of board and controls
+  before, during and after the event, 0 px apart; "visible" = rect inside the
+  visual viewport with the keyboard up. The tester reports px and screenshots.
+- **Write device quirks down instead of fighting them**: e.g. soft-keyboard
+  typing may not reach the page under USB debugging — insert the text over CDP
+  (`Input.insertText`) and report real typing as unproven.
+- **Tests pin the rule, not the layout model**: "fits one screen", "wraps on
+  whole words", "target ≥ 48 px", computed from the real classes. A test that
+  repeats the implementation's numbers goes stale with the next fix and proves
+  nothing.
 - Screenshots go into the PR or a review page, small JPEGs (phone 540 px wide,
   desktop ≤ 1400 px).
 
-## 6. Desktop is not a stretched phone
+## 6. Rules a real phone taught
+
+Each was missed by emulation and caught on a device. They apply wherever the
+page takes input (games, forms, quizzes).
+
+- **Keep the keyboard up.** A send button beside a text field must not take
+  focus: `preventDefault()` on its `pointerdown`/`mousedown` while the field is
+  focused, refocus after sending — otherwise the keyboard closes after every
+  answer. Enter in an autocomplete field picks the suggestion, it does not
+  send. Set `enterKeyHint`.
+- **Place once, absolutely.** To bring a field into the band above the
+  keyboard, compute one `scrollTo` target after the keyboard has settled
+  (`visualViewport` resize; seconds on a slow phone). Never relative
+  `scrollBy`: a second placement during a smooth scroll overshoots.
+- **Nothing jumps.** Messages, hints and errors get a fixed-height slot reserved
+  in the layout (scroll inside it if long). A panel that appears must not push
+  the board or the controls.
+- **Fixed bars** (offline notice, toasts) are positioned against the visual
+  viewport, stacked above other fixed bars and above controls marked
+  "keep clear", never over the control the player needs next; the page gets
+  matching bottom scroll padding.
+- **A move that did not reach the server consumes nothing.** Selection, picked
+  piece and typed text stay; one sentence says it did not arrive; the notice
+  clears only when a retry succeeds.
+- **One screen.** Board, input pad and actions fit at the resting position.
+  When labels at 16 px do not fit one row, design a fixed two-line row or
+  re-flow the pad — never shrink the text, never go icon-only.
+- **Sizes for an older audience**: text ≥ 16 px (never < 14), targets ≥ 48 px,
+  primary action colour ≥ 7:1, disabled = a readable grey treatment, not
+  opacity. Small targets on a map get invisible enlarged hit areas that never
+  take a neighbour's own area.
+- **Every language is its own layout.** Measure the longest label per language
+  at each width from real font advances; wrap on whole words, never mid-word;
+  check letters with diacritics against marks drawn over them.
+- **Tap does what drag does**; no gesture-only control. Tutorials and dialogs
+  on a phone: one scroller, opened at its top, with a back button.
+- **Phone-only changes leave wider screens provably unchanged**: pin the
+  desktop render (rect diff at 1024 and up) in the same PR.
+
+## 7. Desktop is not a stretched phone
 
 Plan a deliberate desktop pass **before release**, not after complaints:
 
@@ -148,7 +211,7 @@ Plan a deliberate desktop pass **before release**, not after complaints:
   CLS 0.19 to 0.001).
 - Nothing below the desktop breakpoint changes — prove it with the rect diff.
 
-## 7. Visual decisions belong to a human, on one page
+## 8. Visual decisions belong to a human, on one page
 
 Measurements cannot judge looks. Every visual choice (icon style, layout
 variant, accent colour) goes to the owner as **one review page**: images and
@@ -165,7 +228,7 @@ nine-item page in minutes.
 - In reports and PRs say plainly what nobody has looked at: "measured by
   script; neither I nor the owner has looked at these screenshots".
 
-## 8. Identity assets
+## 9. Identity assets
 
 - **One icon per entity, used everywhere** (tiles, related lists, leaderboards,
   profile, daily cards) through one component; the old 16:9 thumbnail survives
@@ -181,7 +244,7 @@ nine-item page in minutes.
   draft article that references it). Dynamically built names are invisible to
   grep — say so.
 
-## 9. Orchestrating the agents
+## 10. Orchestrating the agents
 
 - The orchestrator does not write code: it briefs, checks results against the
   spec, runs or delegates phone checks, and reports to the owner. One PR = one
@@ -195,6 +258,13 @@ nine-item page in minutes.
   live in the same tree). Re-run gates after the last agent stops writing.
 - One agent on the phone at a time; tell the owner beforehand to keep it
   unlocked and plugged in.
+- **Code, tests and the device pass are three different agents.** The device
+  tester is blind: it gets the rule and the acceptance criteria, never the
+  diff, and it reports numbers and screenshots without fixing anything. An
+  agent proving its own work checks what its code already does.
+- **One combined device pass per branch, after the gates** — not a pass per
+  fix. Leftovers that do not block play go into a notes file, not another
+  round.
 - Agent reports separate **measured** (with conditions), **derived from code**
   and **unverified**. No extra verification agents beyond what "done means"
   requires.

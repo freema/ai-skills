@@ -30,7 +30,13 @@ stubbed) so no page or game makes sound on the machine.
       to main (`seo-snapshot.mjs` + `diff`).
 - [ ] Home at phone size shows the target number of whole items.
 - [ ] Real phone over `adb reverse`: home, entity page, the two most used
-      secondary pages.
+      secondary pages — in every state of SKILL.md §5 (resting scroll, URL bar
+      shown and hidden, consent bar up, 360 px, 130 % root font, keyboard open).
+- [ ] With the keyboard open: the field and its send button are inside
+      `visualViewport`; sending keeps the keyboard up; board and controls move
+      0 px when a message, hint or error appears.
+- [ ] Fixed bars cover no control the player needs next; the last control
+      scrolls clear of them.
 - [ ] Overlays: modals, toasts, prompts, cookie bar (fake the trigger if needed,
       and say so).
 
